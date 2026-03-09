@@ -5,9 +5,11 @@ from pathlib import Path
 from lcmodel_pyport.report.coord_writer import write_coord
 from lcmodel_pyport.report.corraw_writer import write_corraw
 from lcmodel_pyport.report.models import ConcentrationRow, MiscMetrics
+from lcmodel_pyport.report.ps_writer import write_ps
 from lcmodel_pyport.report.table_writer import write_table
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_corraw import parse_corraw
+from lcmodel_pyport.verify.parsers_ps import parse_ps
 from lcmodel_pyport.verify.parsers_table import parse_table
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +20,7 @@ TMP.mkdir(parents=True, exist_ok=True)
 # - VT-C-002 maps to LCModel.f:10423-10427, 10804-10808
 # - VT-C-003 maps to LCModel.f:10775-10787
 # - VT-C-004 maps to LCModel.f:10810-10833
+# - VT-C-001/VT-D-001 (weak .ps contract) maps to LCModel.f:10944-11064, 11476-11483
 
 
 def test_vt_c_002_table_writer_contract() -> None:
@@ -75,3 +78,20 @@ def test_vt_c_004_corraw_writer_contract() -> None:
     assert parsed["has_seqpar"] is True
     assert parsed["has_nmid"] is True
     assert parsed["n_points"] == 3
+
+
+def test_vt_c_001_ps_writer_contract() -> None:
+    out = TMP / "out.ps"
+    write_ps(
+        out,
+        ppm_axis=[4.0, 3.5, 3.0, 2.5],
+        phased_data=[0.2, 0.3, 0.4, 0.1],
+        fit=[0.21, 0.31, 0.38, 0.09],
+        background=[0.01, 0.02, 0.03, 0.04],
+        dofull=False,
+        title="PS contract test",
+    )
+    text = out.read_text(encoding="utf-8")
+    assert text.startswith("%!PS-Adobe-3.0")
+    parsed = parse_ps(out)
+    assert parsed["has_crude_model_marker"] is True

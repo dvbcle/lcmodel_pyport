@@ -17,6 +17,7 @@ from lcmodel_pyport.verify.fixtures import load_checksums, verify_checksum
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_corraw import parse_corraw
 from lcmodel_pyport.verify.parsers_print import parse_print
+from lcmodel_pyport.verify.parsers_ps import parse_ps
 from lcmodel_pyport.verify.parsers_table import parse_table
 from lcmodel_pyport.verify.tolerances import ToleranceProfile
 
@@ -345,6 +346,8 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
             py_print = parse_print(py_paths["print"])
             ref_cor = parse_corraw(next(ref_dir.glob("*.corraw")))
             py_cor = parse_corraw(py_paths["corraw"])
+            ref_ps = parse_ps(next(ref_dir.glob("*.ps")))
+            py_ps = parse_ps(py_paths["ps"]) if "ps" in py_paths else {"has_crude_model_marker": None}
 
             case_checks: dict[str, Any] = {}
             case_checks["table_sections_match"] = ref_table["sections_order"] == py_table["sections_order"]
@@ -352,6 +355,9 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
             case_checks["print_dofull_match"] = ref_print["dofull"] == py_print["dofull"]
             case_checks["print_phase_pair_count_match"] = ref_print["phase_pair_count"] == py_print["phase_pair_count"]
             case_checks["corraw_n_points_match"] = ref_cor["n_points"] == py_cor["n_points"]
+            case_checks["ps_crude_marker_match"] = (
+                ref_ps["has_crude_model_marker"] == py_ps["has_crude_model_marker"]
+            )
 
             scalar_ok = True
             scalar_deltas: dict[str, float] = {}
@@ -382,6 +388,7 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
                 and case_checks["print_dofull_match"]
                 and case_checks["print_phase_pair_count_match"]
                 and case_checks["corraw_n_points_match"]
+                and case_checks["ps_crude_marker_match"]
                 and case_checks["misc_scalars_within_tolerance"]
                 and case_checks["vectors_within_tolerance"]
             )

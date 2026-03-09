@@ -188,6 +188,16 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - Output: enforced strict integer parsing for control integer fields (prevents silent float->int coercion) and added explicit error-path tests for missing control/reference files.
 - Result: robustness tests added without breaking existing parity coverage.
 
+34. PS visual-parity objective implementation
+- User requested continuing toward a visually inspectable Python `out.ps` parity target.
+- Output:
+  - added `report/ps_writer.py`,
+  - wired `.ps` generation into output-stage flow,
+  - added PS contract/branch tests,
+  - extended evidence checks with `ps_crude_marker_match` for both full/prelim branches,
+  - added `docs/ps_visual_inspection.md` with explicit comparison paths.
+- Result: generated Python `.ps` artifacts are now available for direct visual inspection.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -237,6 +247,9 @@ Use these directly in future sessions.
 15. Type safety hardening
 - "Before expanding solver logic, remove permissive coercions (especially integer controls) and lock behavior with negative-path tests."
 
+16. Visual parity progression
+- "Prioritize generating inspectable `.ps` artifacts and branch-marker parity checks before attempting byte-level PS similarity."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -252,6 +265,7 @@ Use these directly in future sessions.
 11. For Gate G6 transitions, assert branch behavior (`DOFULL`) and stage-presence flags explicitly before tightening numeric parity.
 12. Expand evidence scope by branch first, then by stricter numeric tolerances.
 13. Add failure-path tests alongside new orchestration/writer code so CI catches missing-file and schema regressions early.
+14. Keep `.ps` as weak contract in automated checks while enabling manual visual comparison as a first-class parity artifact.
 
 ## Suggested Next Prompt
-- "Continue G6: add true pipeline stage-state objects (instead of parsed-reference state), then keep evidence parity green while swapping one stage at a time."
+- "Continue G6/G7: replace parsed-reference-backed outputs with true computed stage-state incrementally, while preserving generated `.ps` visual comparability and evidence pass status."

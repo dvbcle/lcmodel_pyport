@@ -6,6 +6,7 @@ from lcmodel_pyport.pipeline.output_stage import generate_outputs_from_reference
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_corraw import parse_corraw
 from lcmodel_pyport.verify.parsers_print import parse_print
+from lcmodel_pyport.verify.parsers_ps import parse_ps
 from lcmodel_pyport.verify.parsers_table import parse_table
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +32,9 @@ def test_output_stage_generation_from_reference_case02() -> None:
     assert "background" in coord["positions"]
     assert cor["n_points"] == 1024
     assert prn["dofull"] is True
+    assert "ps" in paths
+    ps = parse_ps(paths["ps"])
+    assert ps["has_crude_model_marker"] is False
 
 
 def test_output_stage_generation_from_reference_case03() -> None:
@@ -42,3 +46,6 @@ def test_output_stage_generation_from_reference_case03() -> None:
     table = parse_table(paths["table"])
     assert prn["dofull"] is False
     assert table["sections_order"] == ["$$CONC", "$$MISC", "$$DIAG", "$$INPU"]
+    assert "ps" in paths
+    ps = parse_ps(paths["ps"])
+    assert ps["has_crude_model_marker"] is True

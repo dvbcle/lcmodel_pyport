@@ -32,6 +32,7 @@ Start with these documents:
 7. [Step 7: Verification Strategy and Test Harness Spec](docs/step7_test_harness_tdd_outline.md)
 8. [Step 8: Python Architecture Proposal](docs/step8_python_architecture_proposal.md)
 9. [Prompt Playbook (Session Record)](docs/prompt_playbook.md)
+10. [PS Visual Inspection Guide](docs/ps_visual_inspection.md)
 
 ## Current Plan (Reordered)
 1. Baseline source code
@@ -55,7 +56,8 @@ Start with these documents:
 - G7 started: stricter integer control enforcement and explicit missing-input error-path tests.
 - Evidence run available: `VT-E2E-EVID-001` (`tests/test_evidence_external_dataset.py`) with JSON/JUnit output and no `not_implemented` stages.
 - Evidence regression scope currently covers both external dataset branches (`case02_trace_full`, `case03_trace_prelim_only`).
-- Current test status: `49 passed` (pytest, local workspace).
+- Python output-stage now emits inspectable `.ps` files for both external dataset branches.
+- Current test status: `50 passed` (pytest, local workspace).
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
   - `checkpoint/pre_g4_start_20260309`

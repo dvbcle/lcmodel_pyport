@@ -11,6 +11,7 @@ from lcmodel_pyport.report.coord_writer import write_coord
 from lcmodel_pyport.report.corraw_writer import write_corraw
 from lcmodel_pyport.report.models import ConcentrationRow, MiscMetrics
 from lcmodel_pyport.report.print_writer import write_print
+from lcmodel_pyport.report.ps_writer import write_ps
 from lcmodel_pyport.report.table_writer import write_table
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_print import parse_print
@@ -80,6 +81,7 @@ def generate_outputs_from_reference_case(case_dir: str | Path, out_dir: str | Pa
     out_coord = out_path / Path(cfg.filcoo).name
     out_corraw = out_path / Path(cfg.filcor).name
     out_print = out_path / Path(cfg.filpri).name
+    out_ps = out_path / Path(cfg.filps).name if cfg.filps.strip() else None
 
     write_table(out_table, conc_rows, misc_model, list(table["input_changes"]))
     vectors = coord["vectors"]
@@ -114,10 +116,23 @@ def generate_outputs_from_reference_case(case_dir: str | Path, out_dir: str | Pa
         phase_pair_count=int(prn["phase_pair_count"]),
         reference_solution_count=int(prn["reference_solution_count"]),
     )
+    if out_ps is not None and cfg.lps > 0:
+        write_ps(
+            out_ps,
+            ppm_axis=[float(v) for v in vectors["ppm_axis"]],
+            phased_data=[float(v) for v in vectors["phased_data"]],
+            fit=[float(v) for v in vectors["fit"]],
+            background=[float(v) for v in vectors["background"]],
+            dofull=bool(prn["dofull"]),
+            title=f"LCModel Python Port - {case_path.name}",
+        )
 
-    return {
+    outputs = {
         "table": out_table,
         "coord": out_coord,
         "corraw": out_corraw,
         "print": out_print,
     }
+    if out_ps is not None and cfg.lps > 0:
+        outputs["ps"] = out_ps
+    return outputs

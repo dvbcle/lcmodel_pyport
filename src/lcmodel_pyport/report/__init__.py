@@ -5,6 +5,7 @@ from .corraw_writer import render_corraw, write_corraw
 from .diagnostics import covariance_uncertainty
 from .models import ConcentrationRow, MiscMetrics
 from .print_writer import render_print, write_print
+from .ps_writer import render_ps, write_ps
 from .table_writer import render_table, write_table
 
 __all__ = [
@@ -18,5 +19,7 @@ __all__ = [
     "write_corraw",
     "render_print",
     "write_print",
+    "render_ps",
+    "write_ps",
     "covariance_uncertainty",
 ]
