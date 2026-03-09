@@ -1,6 +1,6 @@
 """Fitting kernels and state helpers."""
 
-from .fullfit_engine import FullFitCheckpoint, run_fullfit_computed, run_fullfit_reference
+from .fullfit_engine import FullFitCheckpoint, run_fullfit_computed, run_fullfit_reference, solve_base_amplitudes
 from .prelim_engine import PrelimCheckpoint, run_prelim_computed
 from .regularization import count_inflections_extrema, regula_falsi, second_difference_regularization
 from .snapshots import Snapshot, restore_snapshot, save_snapshot
@@ -11,6 +11,7 @@ __all__ = [
     "PrelimCheckpoint",
     "run_fullfit_reference",
     "run_fullfit_computed",
+    "solve_base_amplitudes",
     "run_prelim_computed",
     "solve_nonnegative",
     "regula_falsi",

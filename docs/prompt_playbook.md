@@ -286,6 +286,15 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - gate-targeted suites stay green,
   - evidence and compare-only parity remain green.
 
+45. Gate 3/4 fit-layer consolidation
+- Output:
+  - moved basis-template amplitude solve into `fit/fullfit_engine.py` as reusable fit-layer API,
+  - output-stage now consumes fit-layer amplitude solve instead of local duplicated solver logic,
+  - expanded payload tests to cover fit-layer amplitude solve contract.
+- Result:
+  - computed-output parity remains green,
+  - architecture alignment improved toward Step 8 separation of concerns.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.

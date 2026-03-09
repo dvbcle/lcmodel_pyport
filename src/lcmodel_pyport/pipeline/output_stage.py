@@ -9,7 +9,7 @@ import numpy as np
 from lcmodel_pyport.config.change_log import extract_effective_changes
 from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.core.errors import OutputContractError
-from lcmodel_pyport.fit.fullfit_engine import run_fullfit_computed
+from lcmodel_pyport.fit.fullfit_engine import run_fullfit_computed, solve_base_amplitudes
 from lcmodel_pyport.fit.prelim_engine import build_analysis_vectors, run_prelim_computed
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
@@ -19,7 +19,6 @@ from lcmodel_pyport.report.models import ConcentrationRow, MiscMetrics
 from lcmodel_pyport.report.print_writer import write_print
 from lcmodel_pyport.report.ps_writer import write_ps
 from lcmodel_pyport.report.table_writer import write_table
-from lcmodel_pyport.fit.solver_linear import solve_nonnegative
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_table import parse_table
@@ -40,13 +39,6 @@ def _find_reference_file(case_dir: Path, suffix: str) -> Path:
     return candidates[0]
 
 
-def _moving_average(values: np.ndarray, window: int) -> np.ndarray:
-    if window <= 1:
-        return values.copy()
-    kernel = np.ones(window, dtype=float) / float(window)
-    return np.convolve(values, kernel, mode="same")
-
-
 def _expanded_metabolite_ids(basis_ids: list[str], dofull: bool) -> list[str]:
     if not dofull:
         return basis_ids[: min(5, len(basis_ids))]
@@ -56,42 +48,6 @@ def _expanded_metabolite_ids(basis_ids: list[str], dofull: bool) -> list[str]:
     expanded.extend(f"{basis_ids[i]}+{basis_ids[(i + 1) % len(basis_ids)]}" for i in range(len(basis_ids)))
     expanded.append(f"{basis_ids[0]}+{basis_ids[-1]}")
     return expanded
-
-
-def _template_for_entry(data: list[complex], ny: int) -> np.ndarray:
-    arr = np.asarray(data, dtype=np.complex128)
-    if arr.size < ny:
-        padded = np.zeros(ny, dtype=np.complex128)
-        padded[: arr.size] = arr
-        arr = padded
-    elif arr.size > ny:
-        start = max(0, (arr.size // 2) - ny // 2)
-        arr = arr[start : start + ny]
-        if arr.size < ny:
-            padded = np.zeros(ny, dtype=np.complex128)
-            padded[: arr.size] = arr
-            arr = padded
-    vec = np.real(arr)
-    vec = vec - float(np.mean(vec))
-    norm = float(np.linalg.norm(vec))
-    if norm <= 0:
-        return np.zeros(ny, dtype=float)
-    return vec / norm
-
-
-def _solve_base_amplitudes(phased: np.ndarray, basis_data: list[list[complex]]) -> np.ndarray:
-    ny = phased.size
-    if ny == 0 or not basis_data:
-        return np.zeros(len(basis_data), dtype=float)
-    b = phased - float(np.mean(phased))
-    cols = [_template_for_entry(data, ny) for data in basis_data]
-    mat = np.column_stack(cols) if cols else np.zeros((ny, 0), dtype=float)
-    if mat.shape[1] == 0:
-        return np.zeros(0, dtype=float)
-    try:
-        return solve_nonnegative(mat, b, tol=1e-10, max_iter=8000)
-    except Exception:
-        return np.full(mat.shape[1], max(float(np.std(b)), 1e-12), dtype=float)
 
 
 def _computed_concentrations(
@@ -248,7 +204,7 @@ def generate_outputs_from_computed_case(case_dir: str | Path, out_dir: str | Pat
     prelim = run_prelim_computed(cfg, raw, basis)
     fullfit = run_fullfit_computed(cfg, raw, basis, prelim) if cfg.dofull else None
 
-    base_amplitudes = _solve_base_amplitudes(phased, [entry.data for entry in basis.entries])
+    base_amplitudes = solve_base_amplitudes(phased, basis)
     conc_rows = _computed_concentrations(basis.metabolite_ids, base_amplitudes, cfg.dofull)
 
     if cfg.dofull and fullfit is not None:

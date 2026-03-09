@@ -5,11 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+
 from lcmodel_pyport.config.models import ControlConfig, RawDataset
 from lcmodel_pyport.core.errors import OutputContractError, ValidationError
 from lcmodel_pyport.io.basis_reader import BasisDataset
 from lcmodel_pyport.fit.prelim_engine import PrelimCheckpoint
 from lcmodel_pyport.fit.regularization import regula_falsi
+from lcmodel_pyport.fit.solver_linear import solve_nonnegative
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_table import parse_table
 
@@ -39,6 +42,44 @@ def _computed_concentration_row_count(basis: BasisDataset, dofull: bool) -> int:
         return 0
     # Match the stage's deterministic combination regime: base + pairwise + one extra.
     return (2 * n) + 1
+
+
+def _template_for_entry(data: list[complex], ny: int) -> np.ndarray:
+    arr = np.asarray(data, dtype=np.complex128)
+    if arr.size < ny:
+        padded = np.zeros(ny, dtype=np.complex128)
+        padded[: arr.size] = arr
+        arr = padded
+    elif arr.size > ny:
+        start = max(0, (arr.size // 2) - ny // 2)
+        arr = arr[start : start + ny]
+        if arr.size < ny:
+            padded = np.zeros(ny, dtype=np.complex128)
+            padded[: arr.size] = arr
+            arr = padded
+    vec = np.real(arr)
+    vec = vec - float(np.mean(vec))
+    norm = float(np.linalg.norm(vec))
+    if norm <= 0:
+        return np.zeros(ny, dtype=float)
+    return vec / norm
+
+
+def solve_base_amplitudes(phased: np.ndarray, basis: BasisDataset) -> np.ndarray:
+    """Solve nonnegative metabolite amplitudes from phased data and basis payloads."""
+    signal = np.asarray(phased, dtype=float)
+    ny = signal.size
+    if ny == 0 or not basis.entries:
+        return np.zeros(len(basis.entries), dtype=float)
+    b = signal - float(np.mean(signal))
+    cols = [_template_for_entry(entry.data, ny) for entry in basis.entries]
+    mat = np.column_stack(cols) if cols else np.zeros((ny, 0), dtype=float)
+    if mat.shape[1] == 0:
+        return np.zeros(0, dtype=float)
+    try:
+        return solve_nonnegative(mat, b, tol=1e-10, max_iter=8000)
+    except Exception:
+        return np.full(mat.shape[1], max(float(np.std(b)), 1e-12), dtype=float)
 
 
 def _solve_alpha_b(target: float) -> float:

@@ -37,6 +37,7 @@ Fortran artifacts are used only as a validation oracle.
 - Replace placeholder concentration/misc generation with solver-derived values.
 - Current progress:
   - report concentrations now come from nonnegative solve against parsed basis spectral payload templates.
+  - base-amplitude solve was moved into fit-layer API and reused by output stage.
   - misc/print fields in computed output now consume computed prelim/fullfit state.
 - Exit tests:
   - `VT-I-006`, `VT-N-001`, `VT-N-002`.
