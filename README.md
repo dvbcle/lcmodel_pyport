@@ -44,7 +44,25 @@ Start with these documents:
 8. Propose Python architecture (last)
 
 ## Status
-- Completed: Steps 1-8
+- Documentation: Steps 1-8 completed.
+- Implementation (Python port):
+  - Gate G1 complete (`config` + RAW/CORAW + schema validation + basic contracts).
+  - Gate G2 complete (basis/preliminary checkpoint parsers + branch/behavior tests).
+  - Gate G3 started (numerical kernels + 1-based/0-based indexing helpers + unit tests).
+- Current test status: `29 passed` (pytest, local workspace).
+
+## Implementation Guidance
+Implementation is being driven by:
+1. [Step 6: Porting-Grade Functional Specifications](docs/step6_porting_functional_specs.md) as normative behavior contracts.
+2. [Step 7: Verification Strategy and Test Harness Spec](docs/step7_test_harness_tdd_outline.md) as executable parity/test definitions.
+3. [Step 8: Python Architecture Proposal](docs/step8_python_architecture_proposal.md) as module/gate sequencing.
+
+## Regression Target (Important)
+- Ultimate acceptance is **not** byte-equality of `out.ps`.
+- Primary regression target is checkpoint + contract + numeric parity:
+  - strict structural/branch parity for `.table/.coord/.corraw/.print`,
+  - tolerance-based numeric parity for concentrations/scalars/vectors,
+  - `.ps` treated as a **weak contract** (gating and expected markers/layout intent, not byte-identical output).
 
 ## Repository Notes
 - This repository currently contains source and analysis docs.
