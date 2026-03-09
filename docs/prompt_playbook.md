@@ -221,6 +221,24 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - reduced `verify/__init__.py` to import-light package metadata only.
 - Result: computed-mode and evidence tests collect/run successfully.
 
+38. Full scientific-port step breakdown request
+- User asked for concrete remaining steps to finish full scientific parity and to encode compare-only validation against Fortran outputs.
+- Output:
+  - added Step 9 plan document with gate sequence to close scientific parity (`docs/step9_scientific_port_completion_plan.md`),
+  - updated Step 7 with explicit compare-only numeric gates (`VT-N-005`, `VT-N-006`),
+  - updated Step 8 with `Gate G8: Scientific Parity Closure (compare-only)`.
+- Result: full-port completion criteria are now explicit and test-linked.
+
+39. Compare-only scientific parity tests added
+- User asked that Fortran outputs be used only for comparison and not for generation.
+- Output:
+  - added `tests/test_scientific_parity_compare_only.py`:
+    - generation-path guardrail (no writes into reference artifact tree),
+    - case-level scientific parity gate assertions (`VT-N-005`, `VT-N-006`).
+- Result:
+  - guardrail test passes,
+  - scientific parity tests fail as expected until solver/report parity is implemented.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -278,6 +296,9 @@ Use these directly in future sessions.
 
 18. Legacy-path demotion
 - "If a test still validates reference-backed generation as success, convert it to an intentional fail signal (strict XPASS/explicit fail) and add computed-mode replacement tests."
+
+19. Scientific parity closure
+- "Add compare-only scientific parity gates that must pass before claiming full port completion; use Fortran artifacts strictly as validation oracles, never generation inputs."
 
 ## Operating Rules That Worked Well
 

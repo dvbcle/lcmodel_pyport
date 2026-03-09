@@ -245,6 +245,14 @@ Required passing tests:
 Required passing tests:
 - VT-U-T-001, VT-U-T-002, VT-U-E-001, VT-U-E-002, VT-U-E-003
 
+### Gate G8: Scientific Parity Closure (compare-only)
+Required passing tests:
+- VT-N-005, VT-N-006, VT-E2E-EVID-001 (all stages pass)
+
+Gate rule:
+- Fortran artifacts are permitted only as comparison oracles.
+- No report-writer or stage generator may consume Fortran outputs as production state inputs.
+
 ## Dependency Strategy
 
 ### Required

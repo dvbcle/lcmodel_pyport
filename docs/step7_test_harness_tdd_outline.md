@@ -241,6 +241,19 @@ Never normalize away:
 ### VT-N-004 Corraw Payload Shape
 - Compare complex payload length and sampled value deltas.
 
+### VT-N-005 External Dataset Scientific Parity Gate (compare-only)
+- Run Python computed mode on external fixtures and compare generated outputs to Fortran artifacts.
+- Pass criteria:
+  - case-level `overall_case_ok=true` for both `DOFULL=T` and `DOFULL=F` branches.
+- Guardrail:
+  - Fortran outputs are oracle-only; they must not be used as generation inputs.
+
+### VT-N-006 Compare-Only Scalar/Concentration Detail Gate
+- For each external case, compare:
+  - misc scalar deltas within configured tolerance profile,
+  - concentration rows keyed by metabolite.
+- Emit per-case metric deltas in machine-readable report.
+
 ## Suite D: Diagnostic Tests (manual/debug)
 
 ### VT-D-001 Artifact Diff Report
@@ -325,10 +338,10 @@ These tests validate numerical kernels independently of full fixture runs.
 | RQ-005 | VT-I-001..VT-I-007, VT-C-001, VT-C-005 |
 | RQ-006 | VT-I-004, VT-C-005, VT-S-001 |
 | RQ-007 | VT-I-004, VT-I-005, VT-C-005, VT-S-001 |
-| RQ-008 | VT-I-005, VT-C-005, VT-N-001, VT-U-N-008, VT-U-N-011 |
+| RQ-008 | VT-I-005, VT-C-005, VT-N-001, VT-N-005, VT-U-N-008, VT-U-N-011 |
 | RQ-009 | VT-C-001, VT-I-007 |
-| RQ-010 | VT-C-002, VT-N-001, VT-N-002, VT-I-006 |
-| RQ-011 | VT-C-003, VT-N-003, VT-I-007 |
+| RQ-010 | VT-C-002, VT-N-001, VT-N-002, VT-N-006, VT-I-006 |
+| RQ-011 | VT-C-003, VT-N-003, VT-N-005, VT-I-007 |
 | RQ-012 | VT-C-004, VT-N-004, VT-I-007 |
 | RQ-013 | VT-C-001, VT-D-001 |
 | RQ-014 | VT-S-001, VT-D-001, VT-U-N-012 |

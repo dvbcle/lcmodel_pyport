@@ -31,8 +31,9 @@ Start with these documents:
 6. [Step 6: Porting-Grade Functional Specifications](docs/step6_porting_functional_specs.md)
 7. [Step 7: Verification Strategy and Test Harness Spec](docs/step7_test_harness_tdd_outline.md)
 8. [Step 8: Python Architecture Proposal](docs/step8_python_architecture_proposal.md)
-9. [Prompt Playbook (Session Record)](docs/prompt_playbook.md)
-10. [PS Visual Inspection Guide](docs/ps_visual_inspection.md)
+9. [Step 9: Full Scientific Port Completion Plan](docs/step9_scientific_port_completion_plan.md)
+10. [Prompt Playbook (Session Record)](docs/prompt_playbook.md)
+11. [PS Visual Inspection Guide](docs/ps_visual_inspection.md)
 
 ## Current Plan (Reordered)
 1. Baseline source code
@@ -60,6 +61,7 @@ Start with these documents:
 - Python output-stage now emits inspectable `.ps` files for both external dataset branches.
 - Current test status:
   - Computed-mode/evidence tests are passing (`tests/test_gate_g5_output_stage_computed.py`, `tests/test_gate_g6_orchestrator_computed_mode.py`, `tests/test_evidence_external_dataset.py`).
+  - Compare-only scientific parity tests are now defined (`tests/test_scientific_parity_compare_only.py`) and currently fail until full solver/report parity is implemented.
   - Full `pytest` run is intentionally red on 4 legacy reference-backed tests (`tests/test_gate_g5_output_stage.py`, `tests/test_gate_g6_orchestrator_reference_mode.py`) via strict `xfail` so reference-backed generation paths are explicitly treated as failing during migration.
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
