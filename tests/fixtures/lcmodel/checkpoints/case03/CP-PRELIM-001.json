@@ -1,0 +1,20 @@
+{
+  "checkpoint_id": "CP-PRELIM-001",
+  "stage_name": "prelim_stage_pass1",
+  "case_id": "case03_trace_prelim_only",
+  "source": "fortran_reference",
+  "scalars": {
+    "starting_shift_count": 24,
+    "best_shift_points": 1,
+    "best_shift_ppm": 0.00764,
+    "rephase_deg": -18.1,
+    "rephase_degppm": -8.48,
+    "gaussian_fwhm_ppm": 0.0451
+  },
+  "flags": {
+    "has_optimal_shift_section": true
+  },
+  "metadata": {
+    "notes": "Derived from out_trace_prelim.print preliminary-only branch."
+  }
+}

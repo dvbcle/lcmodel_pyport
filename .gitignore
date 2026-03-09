@@ -1,2 +1,6 @@
 .tmp_upstream_lcmodel/
 artifacts/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+pytest-cache-files-*/

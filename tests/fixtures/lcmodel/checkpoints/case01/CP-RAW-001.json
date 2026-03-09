@@ -1,0 +1,18 @@
+{
+  "checkpoint_id": "CP-RAW-001",
+  "stage_name": "raw_stage",
+  "case_id": "case01",
+  "nmid": {
+    "fmtdat": "(2E15.6)",
+    "tramp": 1.0,
+    "volume": 1.0,
+    "seqacq": false,
+    "bruker": false
+  },
+  "n_points": 1024,
+  "first_sample": {
+    "real": 0.001376081,
+    "imag": -3.44626e-05
+  }
+}
+

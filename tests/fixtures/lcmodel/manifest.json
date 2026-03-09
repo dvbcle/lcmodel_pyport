@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "id": "case01_baseline",
+      "description": "Upstream baseline control run",
+      "inputs": {
+        "control": "artifacts/step4_exec/case01/control.file",
+        "raw": "artifacts/step4_exec/case01/data.raw",
+        "basis": "artifacts/step4_exec/case01/3t.basis"
+      },
+      "expected_outputs": {
+        "ps": "artifacts/step4_exec/case01/out.ps"
+      },
+      "mode_tags": {
+        "dofull": true,
+        "trace": false
+      },
+      "tolerance_profile": "TOL-Base",
+      "required_tests": [
+        "VT-I-001",
+        "VT-I-002",
+        "VT-U-N-006"
+      ]
+    }
+  ]
+}
+

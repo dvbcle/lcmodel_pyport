@@ -130,6 +130,19 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - User requested autonomous implementation with early-stop rule on unfixable failing tests and mapping of test outcomes to Fortran code blocks.
 - Output: implementation run policy established.
 
+22. Prompt-playbook refresh + autonomous implementation start
+- User requested prompt playbook update, commit/push, then autonomous implementation with fail-fast constraints.
+- Output: playbook update committed/pushed; implementation started with Gate G1 passing tests and traceability anchors.
+
+23. Gate G2 expansion via checkpoint-driven tests
+- User requested autonomous continuation.
+- Output: implemented basis/preliminary parsers + checkpoints and tests for `VT-I-003`, `VT-I-004`, `VT-S-001`, `VT-S-002`; all tests passed.
+
+24. Gate G3 numerical kernel bootstrap
+- User requested continued progression.
+- Output: added numerical and indexing kernels with Suite E/F tests.
+- First early failure encountered/fixed in `VT-U-N-010` (inflection test signal threshold interaction), then full suite passed.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -161,6 +174,9 @@ Use these directly in future sessions.
 9. Autonomous with fail-fast constraint
 - "Proceed autonomously, but stop at the first unfixable test failure and report pass/fail mapped to Fortran blocks."
 
+10. Autonomous gate expansion
+- "Proceed to Gate G2/G3 incrementally; after each increment run tests and stop if failures are unfixable."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -170,6 +186,7 @@ Use these directly in future sessions.
 5. Use small, explicit prompts to advance one stage at a time.
 6. When external review feedback is provided, convert it into requirement IDs plus test IDs, not prose-only edits.
 7. During implementation, enforce an explicit stop condition tied to test failures.
+8. For early numerical failures, patch only the failing kernel/test pair first, rerun, and avoid expanding scope until green.
 
-## Suggested Next Prompt (When Implementation Starts)
-- "Start Phase A from Step 8: implement `config` and `io` layers with tests required for Gate G1 only; do not scaffold unrelated modules."
+## Suggested Next Prompt
+- "Continue from current baseline: add orchestration skeleton and checkpoint emitters for Gate G4/G5, keep fail-fast policy, and report test outcomes mapped to Fortran blocks."

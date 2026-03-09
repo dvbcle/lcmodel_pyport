@@ -1,0 +1,19 @@
+{
+  "checkpoint_id": "CP-CTRL-001",
+  "stage_name": "control_stage",
+  "case_id": "case01",
+  "scalars": {
+    "key": 210387309,
+    "nunfil": 1024,
+    "deltat": 0.0005,
+    "hzpppm": 127.786142,
+    "dofull": true,
+    "lps": 8
+  },
+  "paths": {
+    "filbas": "3t.basis",
+    "filraw": "data.raw",
+    "filps": "out.ps"
+  }
+}
+

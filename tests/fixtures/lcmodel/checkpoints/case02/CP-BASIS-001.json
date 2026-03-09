@@ -1,0 +1,21 @@
+{
+  "checkpoint_id": "CP-BASIS-001",
+  "stage_name": "basis_stage_1",
+  "case_id": "case02_trace_full",
+  "source": "fortran_reference",
+  "scalars": {
+    "basis_set_id": "SPANT",
+    "fmtbas": "(6E13.5)",
+    "badelt": 0.0005,
+    "ndatab": 1024,
+    "basis_file_entry_count": 17,
+    "preliminary_selected_count": 5,
+    "final_selected_count": 27
+  },
+  "vectors": {
+    "preliminary_metabolites": ["Cr", "Glu", "GPC", "Ins", "NAA"]
+  },
+  "metadata": {
+    "notes": "Basis file entries from 3t.basis; stage selections from out_trace_full.print"
+  }
+}
