@@ -56,8 +56,9 @@ Start with these documents:
 - G7 started: stricter integer control enforcement and explicit missing-input error-path tests.
 - Evidence run available: `VT-E2E-EVID-001` (`tests/test_evidence_external_dataset.py`) with JSON/JUnit output and no `not_implemented` stages.
 - Evidence regression scope currently covers both external dataset branches (`case02_trace_full`, `case03_trace_prelim_only`).
+- Evidence now includes explicit PS-input intermediate parity stage (`ps_input_parity_stage`) for visual-debug fallback.
 - Python output-stage now emits inspectable `.ps` files for both external dataset branches.
-- Current test status: `50 passed` (pytest, local workspace).
+- Current test status: `52 passed` (pytest, local workspace).
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
   - `checkpoint/pre_g4_start_20260309`

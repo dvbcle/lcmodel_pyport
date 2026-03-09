@@ -198,6 +198,14 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - added `docs/ps_visual_inspection.md` with explicit comparison paths.
 - Result: generated Python `.ps` artifacts are now available for direct visual inspection.
 
+35. PS-input intermediate checkpoint parity
+- User clarified that if visual PS parity fails, intermediate PS-generating data should be checked first.
+- Output:
+  - added `CP-PS-INPUT-001` checkpoints for full and prelim external cases,
+  - added dedicated PS-input checkpoint parity tests,
+  - integrated `ps_input_parity_stage` into `VT-E2E-EVID-001` evidence run.
+- Result: evidence report now shows an explicit pass/fail stage for PS-input parity before visual interpretation.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -250,6 +258,9 @@ Use these directly in future sessions.
 16. Visual parity progression
 - "Prioritize generating inspectable `.ps` artifacts and branch-marker parity checks before attempting byte-level PS similarity."
 
+17. PS fallback protocol
+- "If PS visual parity is questionable, validate PS-input checkpoints (`ppm_axis`, `phased_data`, `fit`, `background`, branch markers) before modifying PS rendering."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -266,6 +277,7 @@ Use these directly in future sessions.
 12. Expand evidence scope by branch first, then by stricter numeric tolerances.
 13. Add failure-path tests alongside new orchestration/writer code so CI catches missing-file and schema regressions early.
 14. Keep `.ps` as weak contract in automated checks while enabling manual visual comparison as a first-class parity artifact.
+15. Promote manual-debug fallback paths (like PS-input checkpoints) into automated evidence stages as soon as defined.
 
 ## Suggested Next Prompt
-- "Continue G6/G7: replace parsed-reference-backed outputs with true computed stage-state incrementally, while preserving generated `.ps` visual comparability and evidence pass status."
+- "Continue G6/G7: replace parsed-reference-backed outputs with true computed stage-state incrementally, while keeping PS-input checkpoint parity and evidence stages green."

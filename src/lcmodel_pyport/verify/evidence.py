@@ -18,6 +18,7 @@ from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_corraw import parse_corraw
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_ps import parse_ps
+from lcmodel_pyport.verify.ps_inputs import build_ps_input_checkpoint, checkpoint_to_dict
 from lcmodel_pyport.verify.parsers_table import parse_table
 from lcmodel_pyport.verify.tolerances import ToleranceProfile
 
@@ -322,6 +323,81 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
     try:
         if not generated:
             raise RuntimeError("generated outputs unavailable")
+        ps_input_checks: dict[str, Any] = {}
+        ps_input_ok = True
+        for case_id, ref_dir, py_paths, cp_path in (
+            (
+                "case02",
+                root / "artifacts" / "step4_exec" / "case02_trace_full",
+                generated["case02"],
+                cp_root / "case02" / "CP-PS-INPUT-001.json",
+            ),
+            (
+                "case03",
+                root / "artifacts" / "step4_exec" / "case03_trace_prelim_only",
+                generated["case03"],
+                cp_root / "case03" / "CP-PS-INPUT-001.json",
+            ),
+        ):
+            cp_expected = _load_json(cp_path)["scalars"]
+            cp_ref = checkpoint_to_dict(
+                build_ps_input_checkpoint(
+                    next(ref_dir.glob("*.coord")),
+                    next(ref_dir.glob("*.print")),
+                    next(ref_dir.glob("*.ps")),
+                )
+            )
+            cp_py = checkpoint_to_dict(
+                build_ps_input_checkpoint(
+                    py_paths["coord"],
+                    py_paths["print"],
+                    py_paths["ps"],
+                )
+            )
+            case_checks = {
+                "reference_matches_checkpoint": (
+                    cp_ref["ny"] == cp_expected["ny"]
+                    and cp_ref["dofull"] == cp_expected["dofull"]
+                    and cp_ref["has_crude_model_marker"] == cp_expected["has_crude_model_marker"]
+                ),
+                "generated_branch_match": (
+                    cp_py["dofull"] == cp_ref["dofull"]
+                    and cp_py["has_crude_model_marker"] == cp_ref["has_crude_model_marker"]
+                ),
+                "generated_vector_heads_rmse": {
+                    "phased": rmse(cp_py["phased_head3"], cp_ref["phased_head3"]),
+                    "fit": rmse(cp_py["fit_head3"], cp_ref["fit_head3"]),
+                    "background": rmse(cp_py["background_head3"], cp_ref["background_head3"]),
+                },
+            }
+            case_checks["generated_vector_heads_within_tolerance"] = all(
+                v <= tol.vector_rmse for v in case_checks["generated_vector_heads_rmse"].values()
+            )
+            case_checks["overall_case_ok"] = (
+                case_checks["reference_matches_checkpoint"]
+                and case_checks["generated_branch_match"]
+                and case_checks["generated_vector_heads_within_tolerance"]
+            )
+            ps_input_checks[case_id] = case_checks
+            if not case_checks["overall_case_ok"]:
+                ps_input_ok = False
+
+        stages.append(
+            _stage_pass(
+                "ps_input_parity_stage",
+                "PS input intermediates match checkpoints/reference for both external branches.",
+                {"cases": ps_input_checks},
+                ["LCModel.f:10775-10787", "LCModel.f:11476-11483"],
+            )
+            if ps_input_ok
+            else _stage_fail(
+                "ps_input_parity_stage",
+                "PS input intermediate parity failed for one or more branches.",
+                {"cases": ps_input_checks},
+                ["LCModel.f:10775-10787", "LCModel.f:11476-11483"],
+            )
+        )
+
         checks: dict[str, Any] = {}
         overall_ok = True
         checks_by_case: dict[str, Any] = {}

@@ -1,0 +1,25 @@
+{
+  "checkpoint_id": "CP-PS-INPUT-001",
+  "stage_name": "ps_input_stage",
+  "case_id": "case02_trace_full",
+  "source": "fortran_reference",
+  "scalars": {
+    "ny": 498,
+    "dofull": true,
+    "has_crude_model_marker": false,
+    "ppm_first": 4.0,
+    "ppm_last": 0.20182,
+    "phased_head3": [6.49122e-05, 4.55149e-05, 6.21364e-05],
+    "fit_head3": [7.84849e-05, 7.69175e-05, 7.60303e-05],
+    "background_head3": [5.174e-05, 5.146e-05, 5.119e-05],
+    "phased_min": -1.29003e-05,
+    "phased_max": 0.000482516,
+    "fit_min": 2.07809e-07,
+    "fit_max": 0.000479374,
+    "background_min": -1.411e-06,
+    "background_max": 5.174e-05
+  },
+  "metadata": {
+    "notes": "PS input vectors and branch marker derived from out_trace_full.coord/.print/.ps"
+  }
+}
