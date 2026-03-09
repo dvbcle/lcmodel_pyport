@@ -289,6 +289,32 @@ These tests validate numerical kernels independently of full fixture runs.
 ### VT-U-N-012 Covariance/Uncertainty Sanity
 - Validate covariance symmetry and nonnegative uncertainty extraction on controlled cases.
 
+### VT-U-N-013 Window Index Mapping Integrity
+- Validate `LDATST/LDATEN/NY/NYUSE`-style window conversions from 1-based to 0-based indexing on synthetic fixtures.
+
+## Suite F: Index/Type/Error Unit Tests (module-level)
+
+### VT-U-I-001 Loop Bound Equivalence
+- Assert translated Python loops visit the same logical element set as original Fortran bounds.
+
+### VT-U-I-002 Slice Boundary Equivalence
+- Assert slice conversions preserve inclusive Fortran endpoints where intended.
+
+### VT-U-T-001 Typed Schema Validation
+- Validate required data models reject missing/ill-typed fields before stage execution.
+
+### VT-U-T-002 Integer Control Field Enforcement
+- Ensure integer control variables are explicitly typed and reject float/string coercion without explicit conversion rules.
+
+### VT-U-E-001 Recoverable Error Mapping
+- Assert recoverable legacy conditions map to warning diagnostics without crashing the run.
+
+### VT-U-E-002 Fatal Error Mapping
+- Assert fatal legacy conditions raise explicit fatal exceptions with stage and context details.
+
+### VT-U-E-003 I/O Error Context Propagation
+- Assert file read/write failures include file path, stage name, and case ID in error payload.
+
 ## Requirement-to-Test Traceability
 
 | Step 6 Requirement | Primary Test IDs |
@@ -306,6 +332,9 @@ These tests validate numerical kernels independently of full fixture runs.
 | RQ-012 | VT-C-004, VT-N-004, VT-I-007 |
 | RQ-013 | VT-C-001, VT-D-001 |
 | RQ-014 | VT-S-001, VT-D-001, VT-U-N-012 |
+| RQ-015 | VT-U-N-013, VT-U-I-001, VT-U-I-002, VT-I-007 |
+| RQ-016 | VT-U-T-001, VT-U-T-002, VT-I-001 |
+| RQ-017 | VT-U-E-001, VT-U-E-002, VT-U-E-003, VT-D-001 |
 
 ## Tolerance Policy Specification
 
@@ -331,6 +360,11 @@ Each case points to a tolerance profile ID in `manifest.yaml`.
 - `vector_rmse_default`: `1e-8`
 - For solver tests, allow dedicated residual thresholds per test ID.
 
+### TOL-IndexTypeError
+- Index tests: exact index-set equality.
+- Type tests: exact pass/fail behavior by schema rule.
+- Error tests: exact exception class + required context fields.
+
 Tolerance values are initial placeholders and must be tuned from empirical runs, then version-locked.
 
 ## Regression Exception Governance
@@ -355,14 +389,16 @@ Any new exception requires:
 ## CI Gate Policy
 
 ### CI-PR (required on every PR)
-- Run Suite A + selected Suite B + critical unit numerics (`VT-U-N-001`, `003`, `006`, `007`).
+- Run Suite A + selected Suite B + critical unit tests:
+  - numeric: `VT-U-N-001`, `003`, `006`, `007`
+  - index/type/error: `VT-U-I-001`, `VT-U-T-001`, `VT-U-E-002`
 - Fail build on any contract failure.
 
 ### CI-Main (required on merge to main)
-- Run Suite A + B + representative Suite C + full unit numerics suite.
+- Run Suite A + B + representative Suite C + full Suite E and Suite F.
 
 ### CI-Nightly (full regression)
-- Run full Suite A/B/C + full intermediate checkpoint suite + unit numerics.
+- Run full Suite A/B/C + full intermediate checkpoint suite + Suite E + Suite F.
 - Publish diff reports and parsed snapshots on failure.
 
 ## Reporting Specification
@@ -390,8 +426,9 @@ Emit concise summary table:
 5. Implement `.corraw` parser and payload checks.
 6. Add intermediate checkpoint emitters and `VT-I-*` tests.
 7. Add numerical unit tests (`VT-U-N-*`) and dedicated tolerance profile.
-8. Add numeric tolerance engine and Suite C.
-9. Add CI reporting and known-difference enforcement.
+8. Add index/type/error unit tests (`VT-U-I-*`, `VT-U-T-*`, `VT-U-E-*`).
+9. Add numeric tolerance engine and Suite C.
+10. Add CI reporting and known-difference enforcement.
 
 ## Step 7 Completion Criteria
 Step 7 is complete when:
@@ -401,3 +438,4 @@ Step 7 is complete when:
 4. Regression exception process is documented and enforceable.
 5. Intermediate stage checkpoints are defined and testable for both `DOFULL=T` and `DOFULL=F` paths.
 6. Numerical kernels have explicit unit-test coverage independent of end-to-end fixtures.
+7. Index conversion, typed schema validation, and error translation all have explicit unit-test coverage.

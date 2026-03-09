@@ -8,6 +8,7 @@ Propose a Python architecture that directly implements the Step 6 functional con
 2. Strong contract boundaries between parsing, pipeline, solver, and reporting.
 3. Deterministic outputs for reproducible regression testing.
 4. Incremental implementation path aligned with fixture-based TDD.
+5. Explicit protection against index drift, implicit typing mistakes, and error-model mismatch.
 
 ## Proposed Repository Layout
 
@@ -29,6 +30,11 @@ src/lcmodel_pyport/
     orchestrator.py
     state.py
     voxel_loop.py
+    indexing.py
+    errors.py
+  validation/
+    schemas.py
+    model_checks.py
   preprocess/
     fft_ops.py
     shift_phase.py
@@ -72,6 +78,23 @@ src/lcmodel_pyport/
 | FC-5 `prelim_engine` | `fit/prelim_engine.py` |
 | FC-6 `fullfit_engine` | `fit/fullfit_engine.py`, `fit/regularization.py`, `fit/snapshots.py` |
 | FC-7 `reporting_layer` | `report/*` |
+
+## Porting Safety Controls (Index/Type/Error)
+
+### PSC-1 Index Conversion Control
+1. Centralize Fortran-to-Python index transforms in `core/indexing.py`.
+2. Prohibit ad-hoc index arithmetic in solver/report modules.
+3. Require explicit helper usage for window and loop bound conversions.
+
+### PSC-2 Type and Schema Control
+1. Enforce typed dataclass models in `config/models.py`.
+2. Validate model instances with `validation/schemas.py` before each major stage.
+3. Fail early on schema/type violations.
+
+### PSC-3 Error Translation Control
+1. Centralize exception classes and severity mapping in `core/errors.py`.
+2. Require stage-level catch/raise policy to map legacy behavior into recoverable vs fatal Python paths.
+3. Ensure raised exceptions include stage, case, and artifact context fields.
 
 ## Core Data Model Strategy
 
@@ -156,6 +179,7 @@ The following matrix maps implementation modules to the specific Step 7 test IDs
 | Module / Layer | Primary Test IDs | Gate Intent |
 |---|---|---|
 | `config/control_parser.py` | VT-I-001, VT-S-003, VT-C-005 | control parsing correctness and branch-flag integrity |
+| `config/models.py` | VT-U-T-001, VT-U-T-002 | strict typed contract behavior |
 | `config/change_log.py` | VT-S-003, VT-I-001 | input-change extraction and reporting parity |
 | `io/raw_reader.py` | VT-I-002, VT-C-004, VT-N-004, VT-U-N-006 | RAW parsing/scaling and corrected RAW contracts |
 | `io/h2o_reader.py` | VT-I-002, VT-C-004 | H2O side-path parsing and header contract integrity |
@@ -175,6 +199,10 @@ The following matrix maps implementation modules to the specific Step 7 test IDs
 | `fit/snapshots.py` | VT-U-N-011, VT-I-005 | best-state save/restore correctness |
 | `core/orchestrator.py` | VT-I-001..VT-I-007, VT-C-001, VT-C-005 | stage ordering, branch execution, artifact completeness |
 | `core/voxel_loop.py` | VT-C-001, VT-I-007 | voxel iteration/skip semantics |
+| `core/indexing.py` | VT-U-N-013, VT-U-I-001, VT-U-I-002 | 1-based to 0-based conversion integrity |
+| `core/errors.py` | VT-U-E-001, VT-U-E-002, VT-U-E-003 | error translation and context propagation |
+| `validation/schemas.py` | VT-U-T-001, VT-U-T-002 | schema/type enforcement gate |
+| `validation/model_checks.py` | VT-U-T-001, VT-I-001 | stage-boundary model validation |
 | `report/table_writer.py` | VT-C-002, VT-N-001, VT-N-002 | table section contract and scalar/conc outputs |
 | `report/coord_writer.py` | VT-C-003, VT-N-003 | coord ordering and vector output parity |
 | `report/corraw_writer.py` | VT-C-004, VT-N-004 | corrected RAW header/payload contract |
@@ -191,7 +219,7 @@ Each module group should be considered "ready" only when its mapped critical tes
 
 ### Gate G1: Config and RAW I/O
 Required passing tests:
-- VT-I-001, VT-I-002, VT-S-003, VT-U-N-006, VT-C-004
+- VT-I-001, VT-I-002, VT-S-003, VT-U-N-006, VT-C-004, VT-U-T-001
 
 ### Gate G2: Basis and Preliminary Flow
 Required passing tests:
@@ -199,7 +227,7 @@ Required passing tests:
 
 ### Gate G3: Numerical Kernels
 Required passing tests:
-- VT-U-N-001 through VT-U-N-012
+- VT-U-N-001 through VT-U-N-013, VT-U-I-001, VT-U-I-002
 
 ### Gate G4: Full Fit and Snapshot Behavior
 Required passing tests:
@@ -212,6 +240,10 @@ Required passing tests:
 ### Gate G6: End-to-End Orchestration
 Required passing tests:
 - VT-I-001..VT-I-007, VT-C-001..VT-C-005, representative VT-N-* set
+
+### Gate G7: Error and Schema Robustness
+Required passing tests:
+- VT-U-T-001, VT-U-T-002, VT-U-E-001, VT-U-E-002, VT-U-E-003
 
 ## Dependency Strategy
 
@@ -261,9 +293,10 @@ Each stage emits structured events that writers can convert to legacy-like diagn
 ### Phase D (hardening)
 1. Implement reporting writers to pass Gate G5.
 2. Pass Gate G6 (orchestration-wide).
-3. Tighten tolerances.
-4. Resolve known differences.
-5. Stabilize CI gate profiles.
+3. Pass Gate G7 (error/schema robustness).
+4. Tighten tolerances.
+5. Resolve known differences.
+6. Stabilize CI gate profiles.
 
 ## Risks and Mitigations
 
@@ -287,3 +320,4 @@ Mitigation:
 2. All Step 6 requirements map to concrete modules and stage interfaces.
 3. Step 7 test IDs can be attached to architecture components without ambiguity.
 4. Implementation can proceed incrementally while preserving parity visibility.
+5. Index conversion, typed schema validation, and error translation each have explicit module ownership and test gates.

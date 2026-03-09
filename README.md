@@ -31,6 +31,7 @@ Start with these documents:
 6. [Step 6: Porting-Grade Functional Specifications](docs/step6_porting_functional_specs.md)
 7. [Step 7: Verification Strategy and Test Harness Spec](docs/step7_test_harness_tdd_outline.md)
 8. [Step 8: Python Architecture Proposal](docs/step8_python_architecture_proposal.md)
+9. [Prompt Playbook (Session Record)](docs/prompt_playbook.md)
 
 ## Current Plan (Reordered)
 1. Baseline source code
