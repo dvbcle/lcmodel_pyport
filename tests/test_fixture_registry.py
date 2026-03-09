@@ -43,6 +43,11 @@ def test_manifest_expected_outputs_exist_for_trace_cases() -> None:
             assert (ROOT / rel_path).exists()
 
 
+def test_checkpoint_registry_contains_fullfit_checkpoint() -> None:
+    cp_full = FIX_ROOT / "checkpoints" / "case02" / "CP-FULL-001.json"
+    assert cp_full.exists()
+
+
 def test_checksum_registry_matches_trace_case_outputs() -> None:
     checksums = load_checksums(FIX_ROOT / "checksums.sha256")
     for rel_path in (

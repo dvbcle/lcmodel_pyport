@@ -44,10 +44,12 @@
       "tolerance_profile": "TOL-Trace",
       "required_tests": [
         "VT-I-003",
+        "VT-I-005",
         "VT-C-002",
         "VT-C-003",
         "VT-C-005",
-        "VT-S-002"
+        "VT-S-002",
+        "VT-N-001"
       ]
     },
     {

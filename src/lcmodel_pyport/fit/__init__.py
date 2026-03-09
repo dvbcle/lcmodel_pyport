@@ -1,10 +1,13 @@
 """Fitting kernels and state helpers."""
 
+from .fullfit_engine import FullFitCheckpoint, run_fullfit_reference
 from .regularization import count_inflections_extrema, regula_falsi, second_difference_regularization
 from .snapshots import Snapshot, restore_snapshot, save_snapshot
 from .solver_linear import solve_nonnegative
 
 __all__ = [
+    "FullFitCheckpoint",
+    "run_fullfit_reference",
     "solve_nonnegative",
     "regula_falsi",
     "second_difference_regularization",

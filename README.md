@@ -49,8 +49,11 @@ Start with these documents:
   - Gate G1 complete (`config` + RAW/CORAW + schema validation + basic contracts).
   - Gate G2 complete (basis/preliminary checkpoint parsers + branch/behavior tests).
   - Gate G3 complete (Step 8 module-aligned numerical kernels, indexing helpers, and unit tests).
-- Current test status: `34 passed` (pytest, local workspace).
-- Rollback checkpoint tag for this phase: `checkpoint/pre_g3_align_20260309`.
+  - Gate G4 started (fullfit-stage reference checkpoint extraction + parity tests for full mode).
+- Current test status: `38 passed` (pytest, local workspace).
+- Rollback checkpoint tags:
+  - `checkpoint/pre_g3_align_20260309`
+  - `checkpoint/pre_g4_start_20260309`
 
 ## Implementation Guidance
 Implementation is being driven by:

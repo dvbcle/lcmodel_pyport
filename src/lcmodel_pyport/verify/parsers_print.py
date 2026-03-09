@@ -19,6 +19,9 @@ _REPHASE_RE = re.compile(
     r"Rephasing to\s*([+-]?\d+(?:\.\d+)?)\s*deg;\s*([+-]?\d+(?:\.\d+)?)\s*deg/ppm"
 )
 _FWHM_RE = re.compile(r"Gaussian FWHM \(ppm\)\s*=\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)")
+_PRELIM_ALPHA_RE = re.compile(
+    r"Preliminary full analysis with alphaB =\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)\s+and alphaS =\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)"
+)
 
 
 def _collect_metabolites(lines: list[str], header: str, stop_tokens: tuple[str, ...]) -> list[str]:
@@ -85,9 +88,23 @@ def parse_print(path: str | Path) -> dict[str, object]:
         if m:
             gaussian_fwhm_ppm = float(m.group(1))
 
+    prelim_alpha_b = None
+    prelim_alpha_s = None
+    for line in lines:
+        m = _PRELIM_ALPHA_RE.search(line)
+        if m:
+            prelim_alpha_b = float(m.group(1))
+            prelim_alpha_s = float(m.group(2))
+
     return {
         "dofull": dofull,
         "markers": found_markers,
+        "phase_pair_count": sum(1 for line in lines if "Phase Pair" in line),
+        "reference_solution_count": sum(
+            1 for line in lines if "Reference Solution for rephased data" in line
+        ),
+        "prelim_alpha_b": prelim_alpha_b,
+        "prelim_alpha_s": prelim_alpha_s,
         "preliminary_metabolites": prelim_metabs,
         "final_metabolites": final_metabs,
         "starting_shift_count": starting_shift_count,

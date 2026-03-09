@@ -1,0 +1,24 @@
+{
+  "checkpoint_id": "CP-FULL-001",
+  "stage_name": "fullfit_stage",
+  "case_id": "case02_trace_full",
+  "source": "fortran_reference",
+  "scalars": {
+    "dofull": true,
+    "phase_pair_count": 1,
+    "reference_solution_count": 2,
+    "prelim_alpha_b": 0.02,
+    "prelim_alpha_s": 10.0,
+    "final_alpha_b": 0.17,
+    "final_alpha_s": 0.37,
+    "fwhm_ppm": 0.084,
+    "sn": 21.0,
+    "data_shift_ppm": 0.008,
+    "phase0_deg": 9.0,
+    "phase1_deg_per_ppm": 2.2,
+    "concentration_rows": 35
+  },
+  "metadata": {
+    "notes": "Derived from out_trace_full.print and out_trace_full.table."
+  }
+}
