@@ -53,6 +53,7 @@ Start with these documents:
   - Gate G5 in progress (added `.print` writer and minimal output-stage generation for `.table/.coord/.corraw/.print` from canonical parsed state).
 - G6 started: reference-mode orchestrator added for case-level staged flow and DOFULL branch behavior checks.
 - Evidence run available: `VT-E2E-EVID-001` (`tests/test_evidence_external_dataset.py`) with JSON/JUnit output and no `not_implemented` stages.
+- Evidence regression scope currently covers both external dataset branches (`case02_trace_full`, `case03_trace_prelim_only`).
 - Current test status: `46 passed` (pytest, local workspace).
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`

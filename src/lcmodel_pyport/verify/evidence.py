@@ -254,22 +254,39 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
             _stage_fail("output_contract_stage", f"Output contract stage failed: {exc}", {}, ["LCModel.f:10423-10427"])
         )
 
-    generated_dir = root / "tests" / ".tmp" / "generated_external_case02"
+    generated_dir = root / "tests" / ".tmp" / "generated_external_cases"
     try:
-        orchestration = run_case_reference_mode(
+        orchestration_full = run_case_reference_mode(
             root / "artifacts" / "step4_exec" / "case02_trace_full",
             generated_dir,
         )
-        generated = orchestration.output_paths
-        files_exist = all(path.exists() for path in generated.values()) and orchestration.output_generated
+        orchestration_prelim = run_case_reference_mode(
+            root / "artifacts" / "step4_exec" / "case03_trace_prelim_only",
+            generated_dir,
+        )
+        generated = {
+            "case02": orchestration_full.output_paths,
+            "case03": orchestration_prelim.output_paths,
+        }
+        files_exist = (
+            all(path.exists() for path in orchestration_full.output_paths.values())
+            and orchestration_full.output_generated
+            and all(path.exists() for path in orchestration_prelim.output_paths.values())
+            and orchestration_prelim.output_generated
+        )
         stages.append(
             _stage_pass(
                 "python_pipeline_e2e_generation",
                 "Python reference-mode orchestration produced all expected files.",
                 {
-                    "generated_files": {k: str(v) for k, v in generated.items()},
-                    "dofull": orchestration.dofull,
-                    "fullfit_loaded": orchestration.fullfit_loaded,
+                    "generated_files": {
+                        "case02": {k: str(v) for k, v in orchestration_full.output_paths.items()},
+                        "case03": {k: str(v) for k, v in orchestration_prelim.output_paths.items()},
+                    },
+                    "case02_dofull": orchestration_full.dofull,
+                    "case02_fullfit_loaded": orchestration_full.fullfit_loaded,
+                    "case03_dofull": orchestration_prelim.dofull,
+                    "case03_fullfit_loaded": orchestration_prelim.fullfit_loaded,
                 },
                 ["docs/step8_python_architecture_proposal.md:294-296"],
             )
@@ -278,9 +295,14 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
                 "python_pipeline_e2e_generation",
                 "Generated outputs missing expected files.",
                 {
-                    "generated_files": {k: str(v) for k, v in generated.items()},
-                    "dofull": orchestration.dofull,
-                    "fullfit_loaded": orchestration.fullfit_loaded,
+                    "generated_files": {
+                        "case02": {k: str(v) for k, v in orchestration_full.output_paths.items()},
+                        "case03": {k: str(v) for k, v in orchestration_prelim.output_paths.items()},
+                    },
+                    "case02_dofull": orchestration_full.dofull,
+                    "case02_fullfit_loaded": orchestration_full.fullfit_loaded,
+                    "case03_dofull": orchestration_prelim.dofull,
+                    "case03_fullfit_loaded": orchestration_prelim.fullfit_loaded,
                 },
                 ["docs/step8_python_architecture_proposal.md:294-296"],
             )
@@ -299,55 +321,74 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
     try:
         if not generated:
             raise RuntimeError("generated outputs unavailable")
-        ref_table = parse_table(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.table")
-        py_table = parse_table(generated["table"])
-        ref_coord = parse_coord(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.coord")
-        py_coord = parse_coord(generated["coord"])
-        ref_print = parse_print(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.print")
-        py_print = parse_print(generated["print"])
-        ref_cor = parse_corraw(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.corraw")
-        py_cor = parse_corraw(generated["corraw"])
-
         checks: dict[str, Any] = {}
-        checks["table_sections_match"] = ref_table["sections_order"] == py_table["sections_order"]
-        checks["concentration_rows_match"] = ref_table["concentration_rows"] == py_table["concentration_rows"]
-        checks["print_dofull_match"] = ref_print["dofull"] == py_print["dofull"]
-        checks["print_phase_pair_count_match"] = ref_print["phase_pair_count"] == py_print["phase_pair_count"]
-        checks["corraw_n_points_match"] = ref_cor["n_points"] == py_cor["n_points"]
+        overall_ok = True
+        checks_by_case: dict[str, Any] = {}
 
-        scalar_ok = True
-        scalar_deltas: dict[str, float] = {}
-        for key in ("fwhm_ppm", "sn", "data_shift_ppm", "phase0_deg", "phase1_deg_per_ppm", "alpha_b", "alpha_s"):
-            rv = float(ref_table["misc_metrics"][key])
-            pv = float(py_table["misc_metrics"][key])
-            scalar_deltas[key] = abs(rv - pv)
-            if not close_scalar(pv, rv, abs_tol=tol.float_abs, rel_tol=tol.float_rel):
-                scalar_ok = False
-        checks["misc_scalar_deltas"] = scalar_deltas
-        checks["misc_scalars_within_tolerance"] = scalar_ok
+        for case_id, ref_dir, py_paths in (
+            (
+                "case02",
+                root / "artifacts" / "step4_exec" / "case02_trace_full",
+                generated["case02"],
+            ),
+            (
+                "case03",
+                root / "artifacts" / "step4_exec" / "case03_trace_prelim_only",
+                generated["case03"],
+            ),
+        ):
+            ref_table = parse_table(next(ref_dir.glob("*.table")))
+            py_table = parse_table(py_paths["table"])
+            ref_coord = parse_coord(next(ref_dir.glob("*.coord")))
+            py_coord = parse_coord(py_paths["coord"])
+            ref_print = parse_print(next(ref_dir.glob("*.print")))
+            py_print = parse_print(py_paths["print"])
+            ref_cor = parse_corraw(next(ref_dir.glob("*.corraw")))
+            py_cor = parse_corraw(py_paths["corraw"])
 
-        vector_ok = True
-        vector_metrics: dict[str, dict[str, float]] = {}
-        for key in ("ppm_axis", "phased_data", "fit", "background"):
-            rv = [float(x) for x in ref_coord["vectors"][key]]
-            pv = [float(x) for x in py_coord["vectors"][key]]
-            vrmse = rmse(rv, pv)
-            vmax = max_abs_delta(rv, pv)
-            vector_metrics[key] = {"rmse": vrmse, "max_abs": vmax}
-            if vrmse > tol.vector_rmse or vmax > tol.vector_max_abs:
-                vector_ok = False
-        checks["vector_metrics"] = vector_metrics
-        checks["vectors_within_tolerance"] = vector_ok
+            case_checks: dict[str, Any] = {}
+            case_checks["table_sections_match"] = ref_table["sections_order"] == py_table["sections_order"]
+            case_checks["concentration_rows_match"] = ref_table["concentration_rows"] == py_table["concentration_rows"]
+            case_checks["print_dofull_match"] = ref_print["dofull"] == py_print["dofull"]
+            case_checks["print_phase_pair_count_match"] = ref_print["phase_pair_count"] == py_print["phase_pair_count"]
+            case_checks["corraw_n_points_match"] = ref_cor["n_points"] == py_cor["n_points"]
 
-        overall_ok = (
-            checks["table_sections_match"]
-            and checks["concentration_rows_match"]
-            and checks["print_dofull_match"]
-            and checks["print_phase_pair_count_match"]
-            and checks["corraw_n_points_match"]
-            and checks["misc_scalars_within_tolerance"]
-            and checks["vectors_within_tolerance"]
-        )
+            scalar_ok = True
+            scalar_deltas: dict[str, float] = {}
+            for key in ("fwhm_ppm", "sn", "data_shift_ppm", "phase0_deg", "phase1_deg_per_ppm", "alpha_b", "alpha_s"):
+                rv = float(ref_table["misc_metrics"][key])
+                pv = float(py_table["misc_metrics"][key])
+                scalar_deltas[key] = abs(rv - pv)
+                if not close_scalar(pv, rv, abs_tol=tol.float_abs, rel_tol=tol.float_rel):
+                    scalar_ok = False
+            case_checks["misc_scalar_deltas"] = scalar_deltas
+            case_checks["misc_scalars_within_tolerance"] = scalar_ok
+
+            vector_ok = True
+            vector_metrics: dict[str, dict[str, float]] = {}
+            for key in ("ppm_axis", "phased_data", "fit", "background"):
+                rv = [float(x) for x in ref_coord["vectors"][key]]
+                pv = [float(x) for x in py_coord["vectors"][key]]
+                vrmse = rmse(rv, pv)
+                vmax = max_abs_delta(rv, pv)
+                vector_metrics[key] = {"rmse": vrmse, "max_abs": vmax}
+                if vrmse > tol.vector_rmse or vmax > tol.vector_max_abs:
+                    vector_ok = False
+            case_checks["vector_metrics"] = vector_metrics
+            case_checks["vectors_within_tolerance"] = vector_ok
+            case_checks["overall_case_ok"] = (
+                case_checks["table_sections_match"]
+                and case_checks["concentration_rows_match"]
+                and case_checks["print_dofull_match"]
+                and case_checks["print_phase_pair_count_match"]
+                and case_checks["corraw_n_points_match"]
+                and case_checks["misc_scalars_within_tolerance"]
+                and case_checks["vectors_within_tolerance"]
+            )
+            checks_by_case[case_id] = case_checks
+            if not case_checks["overall_case_ok"]:
+                overall_ok = False
+        checks["cases"] = checks_by_case
         stages.append(
             _stage_pass(
                 "output_numeric_regression_stage",
