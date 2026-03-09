@@ -10,6 +10,7 @@ This document captures the Step 1 baseline for the source-only codebase:
 - CLI input/output conventions and control parsing routines
 
 All findings are from local source in `lcmodel_fortran/`.
+If explanatory comments and executable behavior diverge, this baseline uses executable code behavior as authoritative.
 
 ## Source Inventory
 
@@ -62,6 +63,22 @@ Effective include graph (active):
   - `lcmodel_fortran/muscle-1.inc`, `lcmodel_fortran/liver-1.inc`, `lcmodel_fortran/lipid-1.inc` inside `MYCONT` (`SPTYPE`-specific default/preset mutation logic)
 
 No additional include chains exist below these files.
+
+## INC Comment-Derived Semantics (Porting-Relevant)
+
+The include-file comments add useful intent that should be preserved during porting:
+
+- `lcmodel_fortran/lcmodel.inc`
+  - Declares sizing invariants for key parameters (for example constraints involving `MMETAB`, `MWFFTC`, `MCPY`, `MCHCOM`, `MCHLIN`, `MDATA`) and explicitly states that the declared variables are global shared state.
+  - Anchors: `lcmodel_fortran/lcmodel.inc:4`, `lcmodel_fortran/lcmodel.inc:267`
+- `lcmodel_fortran/nml_lcmodel.inc`
+  - States this namelist is for reduced output (`/LCMODeL/`), consistent with usage in output serialization.
+  - Anchor: `lcmodel_fortran/nml_lcmodel.inc:1`
+- `lcmodel_fortran/liver-1.inc`, `lcmodel_fortran/lipid-1.inc`, `lcmodel_fortran/muscle-1.inc`
+  - Comments describe `SPTYPE` preset families and intended variants (liver/breast/lipid/prostate/mega-press/muscle).
+  - Several comments explicitly warn that index/subscript positions must stay aligned across preset include files.
+  - These comments align with active conditional branches on `SPTYPE` in the include code blocks.
+  - Anchors: `lcmodel_fortran/liver-1.inc:2`, `lcmodel_fortran/liver-1.inc:5`, `lcmodel_fortran/lipid-1.inc:1`, `lcmodel_fortran/lipid-1.inc:6`, `lcmodel_fortran/lipid-1.inc:216`, `lcmodel_fortran/lipid-1.inc:1011`, `lcmodel_fortran/muscle-1.inc:96`, `lcmodel_fortran/muscle-1.inc:229`, `lcmodel_fortran/muscle-1.inc:452`
 
 ## Shared-State Structure (`lcmodel_fortran/lcmodel.inc`)
 
@@ -184,7 +201,12 @@ The following Step 1 claims were rechecked against explicit source comments:
   - namelist include sources (`lcmodel_fortran/LCModel.f:722`, `lcmodel_fortran/LCModel.f:723`)
 - `MYDATA` comments for raw/H2O data and ECC path (`lcmodel_fortran/LCModel.f:2760`, `lcmodel_fortran/LCModel.f:2762`, `lcmodel_fortran/LCModel.f:2763`)
 - `MYBASI` comments for basis read structure and basis namelists (`lcmodel_fortran/LCModel.f:3224`, `lcmodel_fortran/LCModel.f:3254`, `lcmodel_fortran/LCModel.f:3255`, `lcmodel_fortran/LCModel.f:3660`)
+- Include-file comment anchors checked for porting semantics:
+  - dimension/global-state intent in `lcmodel.inc` (`lcmodel_fortran/lcmodel.inc:4`, `lcmodel_fortran/lcmodel.inc:267`)
+  - reduced-output intent in `nml_lcmodel.inc` (`lcmodel_fortran/nml_lcmodel.inc:1`)
+  - preset-family and subscript-alignment warnings in `liver-1.inc`/`lipid-1.inc`/`muscle-1.inc` (`lcmodel_fortran/liver-1.inc:2`, `lcmodel_fortran/lipid-1.inc:6`, `lcmodel_fortran/muscle-1.inc:96`)
 
 No contradictions were found between Step 1 documentation and the in-source comments.
+If future discrepancies are found between comments and behavior, this baseline treats the code behavior as the source of truth.
 
 

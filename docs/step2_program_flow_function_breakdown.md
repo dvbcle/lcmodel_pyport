@@ -4,6 +4,7 @@
 This Step 2 document decomposes the runtime flow into function-level design specs suitable for porting to Python.
 
 - Source of truth: `lcmodel_fortran/LCModel.f` + includes already baselined in Step 1.
+- Tie-break rule: if explanatory comments and executable behavior differ, use executable code paths as authoritative for porting specs.
 - Full routine inventory remains in:
   - `docs/step1_routine_inventory.tsv`
 - This document focuses on the core CLI pipeline and its direct support routines (the routines that define behavior, not every low-level FFT helper).
@@ -119,6 +120,7 @@ Use one or more golden datasets and verify:
     - `muscle-1.inc`
     - `liver-1.inc`
     - `lipid-1.inc`
+  - Preset comments in those includes indicate profile families (liver/breast/lipid/prostate/mega-press/muscle) and require aligned subscript/index conventions across files; preserve this ordering contract in the port.
   - Validates dimensions, unit/file combinations, option consistency.
   - Sets mode-dependent fields (`DOWS`, calibration modes, baseline/alpha scaling, etc.).
 - Outputs:
@@ -141,15 +143,16 @@ Use one or more golden datasets and verify:
 
 ### `RESTORE_SETTINGS`
 - Purpose:
-  - Reset mutable settings that were adapted by prior voxel analyses.
+  - Save mutable settings on the first voxel, then restore them for later voxels.
 - Outputs:
-  - Reinitializes selected priors/phase/shift ranges for next voxel pass.
+  - Reinitializes selected priors/phase/shift ranges for next voxel pass while keeping designated global `*_orig` trackers.
 
 ### `OPEN_OUTPUT`
 - Purpose:
   - Open output files for current voxel and emit headers/namelist summaries where applicable.
 - Key behavior:
   - For multivoxel datasets, rewrites title/filenames with voxel identifiers.
+  - If `skip_voxel` is set, temporarily disables most output channels and returns early.
   - Uses reduced output namelist (`LCMODeL`) for output serialization when configured.
 
 ### `LOADCH`
@@ -238,7 +241,7 @@ Use one or more golden datasets and verify:
 
 ### `CHECK_CHLESS`
 - Purpose:
-  - Heuristic branch to drop selected low-confidence metabolite groups and rerun preliminary stage.
+  - Heuristic branch to rerun preliminary stage after omitting configured `CHLESS` prefixes when they dominate configured `CHMORE` groups.
 
 ## Phase D: Full Regularized Optimization
 
@@ -253,7 +256,7 @@ Use one or more golden datasets and verify:
 - Purpose:
   - Execute reference/full passes and alpha-search strategy.
 - Key behavior:
-  - Calls `SETUP(2)`, `PLINLS(2/3)`, `RFALSI`, `REPHAS`, `SAVBES`.
+  - Calls `SETUP(2)`, `RFALSI`, `REPHAS`, `SAVBES`, and `PLINLS` on stage-dependent paths.
   - Manages rephase retries (`MREPHA`) and fixed-phase optional branch (`ENDPHA`).
 
 ### `RFALSI` and `SSRANG`
@@ -330,7 +333,43 @@ Use one or more golden datasets and verify:
 
 ### `UPDATE_PRIORS`
 - Purpose:
-  - Update multivoxel-adaptive priors (shift/phase dispersion windows) after each completed voxel analysis.
+  - Update multivoxel priors for shift, `DEGPPM`, and `DEGZER` dispersion using accumulated sample statistics after each completed voxel analysis.
+
+## Comment Cross-Check (Requested Verification)
+
+Step 2 statements were rechecked against inline comments in `lcmodel_fortran/LCModel.f`. Key anchors used for this pass:
+
+- Top-level purpose and CLI flow:
+  - program intent and model description (`lcmodel_fortran/LCModel.f:45`)
+  - startup/per-voxel call sequence (`lcmodel_fortran/LCModel.f:158`, `lcmodel_fortran/LCModel.f:217`, `lcmodel_fortran/LCModel.f:320`, `lcmodel_fortran/LCModel.f:349`, `lcmodel_fortran/LCModel.f:359`)
+- User-facing routine contracts:
+  - `MYCONT` control-input contract and two-pass scratch-read behavior (`lcmodel_fortran/LCModel.f:707`, `lcmodel_fortran/LCModel.f:726`, `lcmodel_fortran/LCModel.f:731`)
+  - `MYDATA` read/scale/ECC contract (`lcmodel_fortran/LCModel.f:2760`)
+  - `MYBASI` basis-read contract and stage meaning (`lcmodel_fortran/LCModel.f:3224`, `lcmodel_fortran/LCModel.f:3237`)
+- Preprocessing/voxel support routines:
+  - `check_zero_voxels` zero-mask behavior (`lcmodel_fortran/LCModel.f:1184`)
+  - `average` mode semantics (`lcmodel_fortran/LCModel.f:1238`)
+  - `restore_settings` save/restore semantics (`lcmodel_fortran/LCModel.f:1451`)
+  - `update_priors` sample-variance updates for shift/phase priors (`lcmodel_fortran/LCModel.f:1568`)
+  - `open_output` multivoxel filename/title rewriting and skip behavior (`lcmodel_fortran/LCModel.f:1709`, `lcmodel_fortran/LCModel.f:1806`)
+- Fitting/solver stages:
+  - `STARTV` starting-value purpose (`lcmodel_fortran/LCModel.f:5443`)
+  - `PHASTA` phase-start strategy (`lcmodel_fortran/LCModel.f:6540`)
+  - `TWOREG` free + fixed-`DEGPPM` fallback intent (`lcmodel_fortran/LCModel.f:7031`)
+  - `TWORG2`/`TWORG3` alpha-search framing (`lcmodel_fortran/LCModel.f:7216`, `lcmodel_fortran/LCModel.f:7404`)
+  - `SSRANG`/`RFALSI` regula-falsi definitions (`lcmodel_fortran/LCModel.f:8192`, `lcmodel_fortran/LCModel.f:8216`)
+  - `PLINLS` nonlinear stage contract (`lcmodel_fortran/LCModel.f:8797`)
+  - `SOLVE` matrix/row semantics and `ONLYFT` behavior (`lcmodel_fortran/LCModel.f:9093`, `lcmodel_fortran/LCModel.f:9104`, `lcmodel_fortran/LCModel.f:9120`, `lcmodel_fortran/LCModel.f:9129`)
+  - `SAVBES` level semantics (`lcmodel_fortran/LCModel.f:10010`)
+  - `FINOUT` final-output and plotting reanalysis path (`lcmodel_fortran/LCModel.f:10109`, `lcmodel_fortran/LCModel.f:10138`, `lcmodel_fortran/LCModel.f:10173`, `lcmodel_fortran/LCModel.f:10202`)
+  - `EXITPS`/`ERRTBL`/`MAKEPS`/`ONEPAG` output and diagnostics roles (`lcmodel_fortran/LCModel.f:10858`, `lcmodel_fortran/LCModel.f:10916`, `lcmodel_fortran/LCModel.f:10944`, `lcmodel_fortran/LCModel.f:11064`)
+- Preset include comments also checked for `MYCONT`-related behavior and ordering assumptions:
+  - `lcmodel_fortran/liver-1.inc:2`
+  - `lcmodel_fortran/lipid-1.inc:6`
+  - `lcmodel_fortran/muscle-1.inc:96`
+
+No contradictions were found between Step 2 routine responsibilities and the explicit routine comments. Wording was tightened in a few places to match comment language more precisely.
+If future discrepancies are found between comments and behavior, this spec treats the code behavior as the source of truth.
 
 ## Porting-Oriented Architecture Notes (Python)
 
@@ -362,6 +401,12 @@ Use one or more golden datasets and verify:
 ## 5) Preserve solver matrix assembly ordering
 - `SOLVE` row/column block ordering drives covariance and diagnostics.
 - Keep deterministic ordering identical during early parity phase.
+
+## 6) Preserve `SPTYPE` preset-table ordering contracts
+- Comments in `liver-1.inc` and `lipid-1.inc` explicitly note that certain subscripts must agree across preset blocks.
+- In practice, these includes act like coupled preset tables layered in `MYCONT`.
+- Port implication:
+  - model preset data as structured tables, but preserve original ordering and overwrite sequence semantics during parity phase.
 
 ## Step 2 Deliverable Status
 - Program flow has been decomposed into phase-by-phase function specs.
