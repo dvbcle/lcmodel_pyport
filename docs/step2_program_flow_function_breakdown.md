@@ -8,6 +8,59 @@ This Step 2 document decomposes the runtime flow into function-level design spec
   - `docs/step1_routine_inventory.tsv`
 - This document focuses on the core CLI pipeline and its direct support routines (the routines that define behavior, not every low-level FFT helper).
 
+## LCModel Functional Intent (Porting Baseline)
+
+LCModel CLI, as implemented here, is a voxel-wise spectroscopy quantification pipeline that:
+
+- reads control, basis, and raw time-domain spectroscopy inputs,
+- applies correction/preprocessing paths (shift/phase, ECC/water, format normalization),
+- fits spectra as a basis-combination model with nonlinear and regularized components,
+- reports concentrations, uncertainty/correlation metrics, diagnostics, and plot/export artifacts.
+
+For the port, this is the baseline behavioral contract. The Python version should preserve this contract before pursuing modernization.
+
+## Non-Negotiable Behavioral Invariants for Porting
+
+The following are high-priority parity constraints:
+
+1. Input contract parity
+- Preserve current namelist/file semantics (`LCMODL`, `NMID`, `BASIS1`, `BASIS`).
+- Preserve two-pass control-read behavior (`MYCONT` scratch-copy + reread override model).
+
+2. Spectral domain parity
+- Preserve current zero-fill and rearranged-frequency conventions.
+- Preserve current phase/shift sign conventions and reference handling.
+- Preserve current handling of `SEQACQ` and `BRUKER` paths.
+
+3. Optimization semantics parity
+- Preserve stage behavior (preliminary vs full analysis).
+- Preserve alpha-search and fallback logic (Regula Falsi path and fixed-`DEGPPM` series behavior).
+- Preserve candidate snapshot/restore semantics (`SAVBES` levels and selection behavior).
+
+4. Reporting/diagnostics parity
+- Preserve concentration table semantics (including combinations and `NAMREL` behavior).
+- Preserve uncertainty/correlation computation flow from solver products.
+- Preserve diagnostic output triggers/levels sufficiently to debug parity regressions.
+
+5. Multivoxel behavior parity
+- Preserve voxel ordering, skip-mask behavior, and adaptive-prior update behavior across voxels.
+
+## Explicit Non-Goals for Early Port Iterations
+
+- No GUI behavior (this codebase is CLI-only and the port scope follows that).
+- No algorithm redesign during initial parity phase.
+- No re-interpretation of control flags or default heuristics until regression parity is demonstrated.
+- No format changes for primary outputs in early iterations.
+
+## Parity Acceptance Criteria (Before Architecture Finalization)
+
+Use one or more golden datasets and verify:
+
+- concentration outputs and ranking are stable within agreed numeric tolerance,
+- key phase/shift/linewidth state variables follow the same solution regime,
+- residual and fit shape are qualitatively matched and numerically close on shared axes,
+- diagnostics show the same branch decisions for major control paths (`DOFULL`, `BASCAL`, `IAVERG`, `IDGPPM`).
+
 ## End-to-End Runtime Flow (CLI)
 
 ### Global startup and control setup
