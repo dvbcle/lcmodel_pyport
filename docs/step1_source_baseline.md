@@ -9,21 +9,21 @@ This document captures the Step 1 baseline for the source-only codebase:
 - logical compile/build units (without build scripts)
 - CLI input/output conventions and control parsing routines
 
-All findings are from local source in this folder.
+All findings are from local source in `lcmodel_fortran/`.
 
 ## Source Inventory
 
 | File | Kind | Role |
 |---|---|---|
-| `LCModel.f` | Fortran fixed-form source | Main program + all subroutines/functions |
-| `lcmodel.inc` | include | Global dimensions, `COMMON` blocks, shared arrays/state |
-| `nml_lcmodl.inc` | include | Full control namelist definition (`/LCMODL/`) |
-| `nml_lcmodel.inc` | include | Reduced-output namelist definition (`/LCMODeL/`) |
-| `muscle-1.inc` | include | `SPTYPE` preset overrides for muscle analyses |
-| `liver-1.inc` | include | `SPTYPE` preset overrides for liver/breast/lipid families |
-| `lipid-1.inc` | include | Additional `SPTYPE` preset overrides for lipid/breast variants |
+| `lcmodel_fortran/LCModel.f` | Fortran fixed-form source | Main program + all subroutines/functions |
+| `lcmodel_fortran/lcmodel.inc` | include | Global dimensions, `COMMON` blocks, shared arrays/state |
+| `lcmodel_fortran/nml_lcmodl.inc` | include | Full control namelist definition (`/LCMODL/`) |
+| `lcmodel_fortran/nml_lcmodel.inc` | include | Reduced-output namelist definition (`/LCMODeL/`) |
+| `lcmodel_fortran/muscle-1.inc` | include | `SPTYPE` preset overrides for muscle analyses |
+| `lcmodel_fortran/liver-1.inc` | include | `SPTYPE` preset overrides for liver/breast/lipid families |
+| `lcmodel_fortran/lipid-1.inc` | include | Additional `SPTYPE` preset overrides for lipid/breast variants |
 
-Observed but commented/inactive include references in `LCModel.f`:
+Observed but commented/inactive include references in `lcmodel_fortran/LCModel.f`:
 - `frahm.inc`
 - `devx.inc`
 - `devx_linux.inc`
@@ -32,8 +32,8 @@ There are no nested `INCLUDE` statements inside any `.inc` file.
 
 ## Entrypoint and Top-Level Flow
 
-- Program entrypoint: `PROGRAM LCMODL` (`LCModel.f:6`).
-- Main control setup: `CALL MYCONT()` (`LCModel.f:160`).
+- Program entrypoint: `PROGRAM LCMODL` (`lcmodel_fortran/LCModel.f:6`).
+- Main control setup: `CALL MYCONT()` (`lcmodel_fortran/LCModel.f:160`).
 - Main execution loops over voxel positions (single-voxel and CSI/multivoxel supported).
 - Per-voxel high-level sequence in `PROGRAM LCMODL`:
   1. `restore_settings`
@@ -54,18 +54,18 @@ Top-level does restart handling for CSI save-state files and CSV append mode bef
 
 Effective include graph (active):
 
-- `LCModel.f`
-  - `lcmodel.inc` in most computational/output routines (global shared state)
-  - `nml_lcmodl.inc` + `nml_lcmodel.inc` in:
+- `lcmodel_fortran/LCModel.f`
+  - `lcmodel_fortran/lcmodel.inc` in most computational/output routines (global shared state)
+  - `lcmodel_fortran/nml_lcmodl.inc` + `lcmodel_fortran/nml_lcmodel.inc` in:
     - `MYCONT` (control namelist read path)
     - `open_output` (namelist echo/write path)
-  - `muscle-1.inc`, `liver-1.inc`, `lipid-1.inc` inside `MYCONT` (`SPTYPE`-specific default/preset mutation logic)
+  - `lcmodel_fortran/muscle-1.inc`, `lcmodel_fortran/liver-1.inc`, `lcmodel_fortran/lipid-1.inc` inside `MYCONT` (`SPTYPE`-specific default/preset mutation logic)
 
 No additional include chains exist below these files.
 
-## Shared-State Structure (`lcmodel.inc`)
+## Shared-State Structure (`lcmodel_fortran/lcmodel.inc`)
 
-`lcmodel.inc` is the central state contract for the executable:
+`lcmodel_fortran/lcmodel.inc` is the central state contract for the executable:
 
 - Dimension/size parameters (`PARAMETER`) for arrays and model limits
   - examples: `MMETAB`, `MUNFIL`, `MDATA`, `MY`, `MBACKG`, `MSIDES`, etc.
@@ -84,17 +84,17 @@ Porting implication: nearly all routine coupling occurs through these shared blo
 Given source layout, the effective logical build model is:
 
 1. Single translation unit:
-   - compile `LCModel.f` (fixed-form Fortran) with include search path containing this folder.
+   - compile `lcmodel_fortran/LCModel.f` (fixed-form Fortran) with include search path containing `lcmodel_fortran/`.
 2. Required include files at compile time:
-   - `lcmodel.inc`
-   - `nml_lcmodl.inc`
-   - `nml_lcmodel.inc`
-   - `muscle-1.inc`
-   - `liver-1.inc`
-   - `lipid-1.inc`
+   - `lcmodel_fortran/lcmodel.inc`
+   - `lcmodel_fortran/nml_lcmodl.inc`
+   - `lcmodel_fortran/nml_lcmodel.inc`
+   - `lcmodel_fortran/muscle-1.inc`
+   - `lcmodel_fortran/liver-1.inc`
+   - `lcmodel_fortran/lipid-1.inc`
 3. Optional/commented historical includes are not needed for this source state.
 
-Program-unit inventory extracted from `LCModel.f`:
+Program-unit inventory extracted from `lcmodel_fortran/LCModel.f`:
 - 149 program units total
 - 1 `PROGRAM`
 - 23 `FUNCTION`s
@@ -112,8 +112,8 @@ Program-unit inventory extracted from `LCModel.f`:
   - rereads `/LCMODL/` to let explicit user values override preset/default mutations
 
 Namelist sources:
-- full control: `nml_lcmodl.inc` (`/LCMODL/`)
-- reduced-print echo: `nml_lcmodel.inc` (`/LCMODeL/`)
+- full control: `lcmodel_fortran/nml_lcmodl.inc` (`/LCMODL/`)
+- reduced-print echo: `lcmodel_fortran/nml_lcmodel.inc` (`/LCMODeL/`)
 
 ### Raw data input (`FILRAW`)
 
@@ -173,16 +173,18 @@ Step 1 requested baseline is complete:
 The following Step 1 claims were rechecked against explicit source comments:
 
 - Program-header I/O contract:
-  - `LCONTR` standard input (`LCModel.f:70`)
-  - basis input on `LBASIS`/`FILBAS` (`LCModel.f:73`)
-  - raw input on `LRAW`/`FILRAW` (`LCModel.f:79`)
-  - optional H2O input on `LH2O`/`FILH2O` when `DOECC`/`DOWS`/`UNSUPR` (`LCModel.f:83`)
-  - outputs on `LPRINT/LCOORD/LCORAW/LPS/LTABLE` with `FILPRI/FILCOO/FILCOr/FILPS/FILTAB` (`LCModel.f:91`, `LCModel.f:94`, `LCModel.f:97`, `LCModel.f:101`, `LCModel.f:104`)
+  - `LCONTR` standard input (`lcmodel_fortran/LCModel.f:70`)
+  - basis input on `LBASIS`/`FILBAS` (`lcmodel_fortran/LCModel.f:73`)
+  - raw input on `LRAW`/`FILRAW` (`lcmodel_fortran/LCModel.f:79`)
+  - optional H2O input on `LH2O`/`FILH2O` when `DOECC`/`DOWS`/`UNSUPR` (`lcmodel_fortran/LCModel.f:83`)
+  - outputs on `LPRINT/LCOORD/LCORAW/LPS/LTABLE` with `FILPRI/FILCOO/FILCOr/FILPS/FILTAB` (`lcmodel_fortran/LCModel.f:91`, `lcmodel_fortran/LCModel.f:94`, `lcmodel_fortran/LCModel.f:97`, `lcmodel_fortran/LCModel.f:101`, `lcmodel_fortran/LCModel.f:104`)
 - `MYCONT` behavior comments and includes:
-  - purpose: control-variable input (`LCModel.f:707`)
-  - scratch-copy and reread behavior (`LCModel.f:731`, `LCModel.f:862`)
-  - namelist include sources (`LCModel.f:722`, `LCModel.f:723`)
-- `MYDATA` comments for raw/H2O data and ECC path (`LCModel.f:2760`, `LCModel.f:2762`, `LCModel.f:2763`)
-- `MYBASI` comments for basis read structure and basis namelists (`LCModel.f:3224`, `LCModel.f:3254`, `LCModel.f:3255`, `LCModel.f:3660`)
+  - purpose: control-variable input (`lcmodel_fortran/LCModel.f:707`)
+  - scratch-copy and reread behavior (`lcmodel_fortran/LCModel.f:731`, `lcmodel_fortran/LCModel.f:862`)
+  - namelist include sources (`lcmodel_fortran/LCModel.f:722`, `lcmodel_fortran/LCModel.f:723`)
+- `MYDATA` comments for raw/H2O data and ECC path (`lcmodel_fortran/LCModel.f:2760`, `lcmodel_fortran/LCModel.f:2762`, `lcmodel_fortran/LCModel.f:2763`)
+- `MYBASI` comments for basis read structure and basis namelists (`lcmodel_fortran/LCModel.f:3224`, `lcmodel_fortran/LCModel.f:3254`, `lcmodel_fortran/LCModel.f:3255`, `lcmodel_fortran/LCModel.f:3660`)
 
 No contradictions were found between Step 1 documentation and the in-source comments.
+
+

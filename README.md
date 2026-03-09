@@ -3,8 +3,17 @@
 ## Project Goal
 Understand the LCModel CLI Fortran source code and produce porting-grade design specifications that enable a reliable implementation in a new language (target: Python).
 
+## AI-Assisted Workflow
+This repository uses an AI-assisted coding workflow to:
+
+- investigate and explain the legacy Fortran codebase,
+- generate and refine porting specifications,
+- help implement and iterate on the Python port.
+
+All generated specifications and code changes should be treated as draft engineering artifacts and validated with reproducible tests and domain review.
+
 ## Scope
-- Source analyzed: `LCModel.f` plus local `.inc` files.
+- Source analyzed: `lcmodel_fortran/LCModel.f` plus local `lcmodel_fortran/*.inc` files.
 - Focus: CLI behavior only.
 - Out of scope: GUI chapters/features from the LCModel manual.
 
@@ -36,3 +45,4 @@ Start with these documents:
 ## Repository Notes
 - This repository currently contains source and analysis docs.
 - Build scripts are not included; the codebase is source-only in its current form.
+

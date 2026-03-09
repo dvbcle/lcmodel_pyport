@@ -3,7 +3,7 @@
 ## Scope
 This Step 2 document decomposes the runtime flow into function-level design specs suitable for porting to Python.
 
-- Source of truth: `LCModel.f` + includes already baselined in Step 1.
+- Source of truth: `lcmodel_fortran/LCModel.f` + includes already baselined in Step 1.
 - Full routine inventory remains in:
   - `docs/step1_routine_inventory.tsv`
 - This document focuses on the core CLI pipeline and its direct support routines (the routines that define behavior, not every low-level FFT helper).
@@ -367,3 +367,4 @@ Use one or more golden datasets and verify:
 - Program flow has been decomposed into phase-by-phase function specs.
 - Core routines now have porting-oriented responsibility/contract definitions.
 - This is sufficient to start Step 3 design outputs (module boundaries + testable port plan), while preserving traceability to original Fortran behavior.
+
