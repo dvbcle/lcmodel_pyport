@@ -64,6 +64,7 @@ Start with these documents:
   - Gate 1 complete (computed prelim/fullfit checkpoints wired into computed orchestration, compare-only parity/evidence green).
   - Gate 2/3 started (data-derived prelim shift/FWHM behavior and numeric-progress tests added).
   - Gate 3/4 started (basis spectral payload parsing + solver-derived concentration amplitudes + computed fullfit-to-report wiring).
+  - Gate 3/4 deepened (fullfit alpha now solved via regula-falsi target, and additional fullfit invariants validated under noise perturbation).
 - Current test status:
   - Computed-mode/evidence tests are passing (`tests/test_gate_g5_output_stage_computed.py`, `tests/test_gate_g6_orchestrator_computed_mode.py`, `tests/test_evidence_external_dataset.py`).
   - Compare-only scientific parity tests are passing (`tests/test_scientific_parity_compare_only.py`) for both external branches.

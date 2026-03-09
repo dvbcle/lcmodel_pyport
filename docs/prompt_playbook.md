@@ -277,6 +277,15 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - targeted suites remain green, including evidence and compare-only parity,
   - full suite remains intentionally red only on legacy strict-XPASS tests.
 
+44. Gate 3/4 optimization-loop deepening
+- Output:
+  - fullfit alpha-B now goes through explicit regula-falsi solve,
+  - fullfit checkpoint formulas for prelim/full terms now computed from prelim/raw/basis features instead of fixed literals,
+  - added stronger invariant assertion that noisy data decreases computed S/N and does not decrease final alpha-B.
+- Result:
+  - gate-targeted suites stay green,
+  - evidence and compare-only parity remain green.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.

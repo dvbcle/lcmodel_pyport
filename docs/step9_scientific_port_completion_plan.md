@@ -29,6 +29,7 @@ Fortran artifacts are used only as a validation oracle.
 - Implement solver loop, regularization search, and best-snapshot behavior.
 - Current progress:
   - computed fullfit checkpoint now derives `S/N`, phase terms, and alpha terms from computed prelim/raw/basis state (no reference parse in generation path).
+  - alpha-B solve now uses explicit regula-falsi root solve on computed target.
 - Exit tests:
   - `VT-I-005`, `VT-N-001`, `VT-N-002`, `VT-U-N-008`, `VT-U-N-011`.
 

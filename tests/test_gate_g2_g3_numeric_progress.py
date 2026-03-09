@@ -51,3 +51,4 @@ def test_fullfit_computed_sn_tracks_noise_level() -> None:
     full_noisy = run_fullfit_computed(cfg, noisy_raw, basis, prelim_noisy)
 
     assert full_noisy.sn < full_clean.sn
+    assert full_noisy.final_alpha_b >= full_clean.final_alpha_b
