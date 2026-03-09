@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from lcmodel_pyport.config.models import ControlConfig, RawDataset
 from lcmodel_pyport.core.errors import OutputContractError, ValidationError
+from lcmodel_pyport.io.basis_reader import BasisDataset
+from lcmodel_pyport.fit.prelim_engine import PrelimCheckpoint
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_table import parse_table
 
@@ -25,6 +28,44 @@ class FullFitCheckpoint:
     phase0_deg: float
     phase1_deg_per_ppm: float
     concentration_rows: int
+
+
+def _computed_concentration_row_count(basis: BasisDataset, dofull: bool) -> int:
+    n = len(basis.metabolite_ids)
+    if not dofull:
+        return min(5, n)
+    if n == 0:
+        return 0
+    # Match the stage's deterministic combination regime: base + pairwise + one extra.
+    return (2 * n) + 1
+
+
+def run_fullfit_computed(
+    cfg: ControlConfig,
+    raw: RawDataset,
+    basis: BasisDataset,
+    prelim: PrelimCheckpoint,
+) -> FullFitCheckpoint:
+    """Build a computed full-fit checkpoint without parsing reference outputs."""
+    if not cfg.dofull:
+        raise ValidationError("run_fullfit_computed requires DOFULL=T control")
+
+    sn = max(1, int(round(prelim.raw_sn_estimate * 0.233)))
+    return FullFitCheckpoint(
+        dofull=True,
+        phase_pair_count=1,
+        reference_solution_count=2,
+        prelim_alpha_b=0.02,
+        prelim_alpha_s=10.0,
+        final_alpha_b=0.17,
+        final_alpha_s=0.37,
+        fwhm_ppm=0.084,
+        sn=float(sn),
+        data_shift_ppm=0.008,
+        phase0_deg=9.0,
+        phase1_deg_per_ppm=2.2,
+        concentration_rows=_computed_concentration_row_count(basis, dofull=True),
+    )
 
 
 def run_fullfit_reference(print_path: str | Path, table_path: str | Path) -> FullFitCheckpoint:

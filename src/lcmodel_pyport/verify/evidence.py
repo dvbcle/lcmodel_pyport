@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from lcmodel_pyport.config.control_parser import build_control_config
-from lcmodel_pyport.fit.fullfit_engine import run_fullfit_reference
+from lcmodel_pyport.fit.fullfit_engine import run_fullfit_computed
+from lcmodel_pyport.fit.prelim_engine import run_prelim_computed
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
 from lcmodel_pyport.pipeline.orchestrator import run_case_computed_mode
@@ -175,21 +176,43 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
         stages.append(_stage_fail("basis_stage", f"Basis stage failed: {exc}", {}, ["LCModel.f:3216-3238"]))
 
     try:
-        p = parse_print(root / "artifacts" / "step4_exec" / "case03_trace_prelim_only" / "out_trace_prelim.print")
+        pre_cfg = build_control_config(
+            (root / "artifacts" / "step4_exec" / "case03_trace_prelim_only" / "control_trace_prelim.file").read_text(
+                encoding="utf-8"
+            )
+        )
+        pre_raw = read_raw_dataset(
+            root / "artifacts" / "step4_exec" / "case03_trace_prelim_only" / "data.raw",
+            expected_nunfil=pre_cfg.nunfil,
+        )
+        pre_basis = read_basis_dataset(root / "artifacts" / "step4_exec" / "case03_trace_prelim_only" / "3t.basis")
+        pre_cp = run_prelim_computed(pre_cfg, pre_raw, pre_basis)
         cp_pre = _load_json(cp_root / "case03" / "CP-PRELIM-001.json")
-        ok = p["best_shift_points"] == cp_pre["scalars"]["best_shift_points"] and p["dofull"] is False
+        ok = (
+            pre_cp.dofull is False
+            and pre_cp.best_shift_points == cp_pre["scalars"]["best_shift_points"]
+            and close_scalar(pre_cp.best_shift_ppm, cp_pre["scalars"]["best_shift_ppm"], abs_tol=1e-5, rel_tol=1e-3)
+            and close_scalar(pre_cp.rephase_deg, cp_pre["scalars"]["rephase_deg"], abs_tol=0.2, rel_tol=1e-3)
+            and close_scalar(pre_cp.rephase_degppm, cp_pre["scalars"]["rephase_degppm"], abs_tol=0.2, rel_tol=1e-3)
+            and close_scalar(
+                pre_cp.gaussian_fwhm_ppm,
+                cp_pre["scalars"]["gaussian_fwhm_ppm"],
+                abs_tol=1e-5,
+                rel_tol=1e-3,
+            )
+        )
         stages.append(
             _stage_pass(
                 "prelim_stage",
-                "Preliminary stage checkpoint parity on external prelim-only case.",
-                {"best_shift_points": p["best_shift_points"], "dofull": p["dofull"]},
+                "Preliminary stage checkpoint parity from computed prelim engine.",
+                {"best_shift_points": pre_cp.best_shift_points, "dofull": pre_cp.dofull},
                 ["LCModel.f:331-346", "LCModel.f:5441-5444", "LCModel.f:6962-7025"],
             )
             if ok
             else _stage_fail(
                 "prelim_stage",
                 "Preliminary stage mismatch against checkpoint.",
-                {"best_shift_points": p["best_shift_points"], "dofull": p["dofull"]},
+                {"best_shift_points": pre_cp.best_shift_points, "dofull": pre_cp.dofull},
                 ["LCModel.f:331-346", "LCModel.f:5441-5444", "LCModel.f:6962-7025"],
             )
         )
@@ -197,20 +220,47 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
         stages.append(_stage_fail("prelim_stage", f"Prelim stage failed: {exc}", {}, ["LCModel.f:331-346"]))
 
     try:
-        cp = run_fullfit_reference(
-            root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.print",
-            root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.table",
+        full_cfg = build_control_config(
+            (root / "artifacts" / "step4_exec" / "case02_trace_full" / "control_trace_full.file").read_text(
+                encoding="utf-8"
+            )
+        )
+        full_raw = read_raw_dataset(
+            root / "artifacts" / "step4_exec" / "case02_trace_full" / "data.raw",
+            expected_nunfil=full_cfg.nunfil,
+        )
+        full_basis = read_basis_dataset(root / "artifacts" / "step4_exec" / "case02_trace_full" / "3t.basis")
+        full_prelim = run_prelim_computed(full_cfg, full_raw, full_basis)
+        cp = run_fullfit_computed(
+            full_cfg,
+            full_raw,
+            full_basis,
+            full_prelim,
         )
         cp_full = _load_json(cp_root / "case02" / "CP-FULL-001.json")
         ok = (
             cp.phase_pair_count == cp_full["scalars"]["phase_pair_count"]
-            and abs(cp.final_alpha_b - cp_full["scalars"]["final_alpha_b"]) <= 1e-9
-            and abs(cp.final_alpha_s - cp_full["scalars"]["final_alpha_s"]) <= 1e-9
+            and cp.reference_solution_count == cp_full["scalars"]["reference_solution_count"]
+            and close_scalar(cp.prelim_alpha_b, cp_full["scalars"]["prelim_alpha_b"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.prelim_alpha_s, cp_full["scalars"]["prelim_alpha_s"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.final_alpha_b, cp_full["scalars"]["final_alpha_b"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.final_alpha_s, cp_full["scalars"]["final_alpha_s"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.fwhm_ppm, cp_full["scalars"]["fwhm_ppm"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.sn, cp_full["scalars"]["sn"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.data_shift_ppm, cp_full["scalars"]["data_shift_ppm"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(cp.phase0_deg, cp_full["scalars"]["phase0_deg"], abs_tol=1e-9, rel_tol=1e-6)
+            and close_scalar(
+                cp.phase1_deg_per_ppm,
+                cp_full["scalars"]["phase1_deg_per_ppm"],
+                abs_tol=1e-9,
+                rel_tol=1e-6,
+            )
+            and cp.concentration_rows == cp_full["scalars"]["concentration_rows"]
         )
         stages.append(
             _stage_pass(
                 "fullfit_stage",
-                "Fullfit checkpoint parity on external full-mode run.",
+                "Fullfit checkpoint parity from computed fullfit engine.",
                 {"phase_pair_count": cp.phase_pair_count, "alpha_b": cp.final_alpha_b, "alpha_s": cp.final_alpha_s},
                 ["LCModel.f:352-356", "LCModel.f:7216-7252", "LCModel.f:7430-7433", "LCModel.f:10008-10056"],
             )

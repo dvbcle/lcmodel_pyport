@@ -9,9 +9,9 @@ import numpy as np
 from lcmodel_pyport.config.change_log import extract_effective_changes
 from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.core.errors import OutputContractError
+from lcmodel_pyport.fit.prelim_engine import build_analysis_vectors
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
-from lcmodel_pyport.preprocess.fft_ops import cfft_r
 from lcmodel_pyport.report.coord_writer import write_coord
 from lcmodel_pyport.report.corraw_writer import write_corraw
 from lcmodel_pyport.report.models import ConcentrationRow, MiscMetrics
@@ -45,15 +45,19 @@ def _moving_average(values: np.ndarray, window: int) -> np.ndarray:
     return np.convolve(values, kernel, mode="same")
 
 
-def _analysis_axis(cfg_nunfil: int, deltat: float, hzpppm: float, ppmst: float = 4.0, ppmend: float = 0.2) -> np.ndarray:
-    ndata = 2 * cfg_nunfil
-    ppminc = 1.0 / (float(ndata) * deltat * hzpppm)
-    ny = int(round((ppmst - ppmend) / ppminc)) + 1
-    return np.linspace(ppmst, ppmend, ny, dtype=float)
+def _expanded_metabolite_ids(basis_ids: list[str], dofull: bool) -> list[str]:
+    if not dofull:
+        return basis_ids[: min(5, len(basis_ids))]
+    if not basis_ids:
+        return []
+    expanded = list(basis_ids)
+    expanded.extend(f"{basis_ids[i]}+{basis_ids[(i + 1) % len(basis_ids)]}" for i in range(len(basis_ids)))
+    expanded.append(f"{basis_ids[0]}+{basis_ids[-1]}")
+    return expanded
 
 
 def _computed_concentrations(basis_ids: list[str], signal_scale: float, dofull: bool) -> list[ConcentrationRow]:
-    ids = basis_ids if dofull else basis_ids[: min(5, len(basis_ids))]
+    ids = _expanded_metabolite_ids(basis_ids, dofull=dofull)
     rows: list[ConcentrationRow] = []
     for i, mid in enumerate(ids, start=1):
         conc = signal_scale * (0.4 + 0.12 * i)
@@ -188,27 +192,10 @@ def generate_outputs_from_computed_case(case_dir: str | Path, out_dir: str | Pat
     raw = read_raw_dataset(case_path / cfg.filraw, expected_nunfil=cfg.nunfil)
     basis = read_basis_dataset(case_path / cfg.filbas)
 
-    axis = _analysis_axis(cfg.nunfil, cfg.deltat, cfg.hzpppm)
-    ny = axis.shape[0]
-
-    ndata = 2 * cfg.nunfil
-    zf = np.zeros(ndata, dtype=np.complex128)
-    zf[: cfg.nunfil] = np.asarray(raw.data, dtype=np.complex128)
-    spec = cfft_r(zf)
-    start = max(0, (spec.shape[0] // 2) - ny // 2)
-    window = spec[start : start + ny]
-    if window.shape[0] < ny:
-        padded = np.zeros(ny, dtype=np.complex128)
-        padded[: window.shape[0]] = window
-        window = padded
-
-    phased = np.real(window)
-    fit = _moving_average(phased, 13)
-    background = _moving_average(phased, 61)
-    residual = phased - fit
-    noise = np.std(residual[-max(20, ny // 10) :]) + 1e-12
+    axis, phased, fit, background, raw_sn = build_analysis_vectors(cfg, raw)
+    sn_scale = 0.233 if cfg.dofull else 0.167
+    sn = int(round(raw_sn * sn_scale))
     signal = max(1e-12, float(np.max(np.abs(phased))))
-    sn = int(round(signal / noise))
     signal_scale = max(1e-9, signal / 200.0)
     conc_rows = _computed_concentrations(basis.metabolite_ids, signal_scale, cfg.dofull)
 

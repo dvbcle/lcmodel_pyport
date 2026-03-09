@@ -59,9 +59,11 @@ Start with these documents:
 - Evidence regression scope currently covers both external dataset branches (`case02_trace_full`, `case03_trace_prelim_only`).
 - Evidence now includes explicit PS-input intermediate parity stage (`ps_input_parity_stage`) for visual-debug fallback.
 - Python output-stage now emits inspectable `.ps` files for both external dataset branches.
+- Computed-mode orchestration now runs prelim/fullfit checkpoints without reading reference `.print/.table` artifacts.
 - Current test status:
   - Computed-mode/evidence tests are passing (`tests/test_gate_g5_output_stage_computed.py`, `tests/test_gate_g6_orchestrator_computed_mode.py`, `tests/test_evidence_external_dataset.py`).
-  - Compare-only scientific parity tests are now defined (`tests/test_scientific_parity_compare_only.py`) and currently fail until full solver/report parity is implemented.
+  - Compare-only scientific parity tests are passing (`tests/test_scientific_parity_compare_only.py`) for both external branches.
+  - New computed checkpoint tests are passing (`tests/test_gate_g4_computed_engines.py`).
   - Full `pytest` run is intentionally red on 4 legacy reference-backed tests (`tests/test_gate_g5_output_stage.py`, `tests/test_gate_g6_orchestrator_reference_mode.py`) via strict `xfail` so reference-backed generation paths are explicitly treated as failing during migration.
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`

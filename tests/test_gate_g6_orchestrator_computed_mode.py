@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from lcmodel_pyport.pipeline.orchestrator import run_case_computed_mode
@@ -9,6 +10,13 @@ from lcmodel_pyport.verify.parsers_table import parse_table
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "tests" / ".tmp" / "gate_g6_orchestrator_computed"
 OUT.mkdir(parents=True, exist_ok=True)
+
+
+def _copy_case_inputs_only(source: Path, target: Path) -> None:
+    target.mkdir(parents=True, exist_ok=True)
+    for pattern in ("*.file", "*.raw", "*.basis"):
+        for file in source.glob(pattern):
+            shutil.copy2(file, target / file.name)
 
 
 def test_orchestrator_case02_full_mode_computed() -> None:
@@ -35,3 +43,14 @@ def test_orchestrator_case03_prelim_mode_computed() -> None:
     prn = parse_print(result.output_paths["print"])
     assert table["sections_order"] == ["$$CONC", "$$MISC", "$$DIAG", "$$INPU"]
     assert prn["dofull"] is False
+
+
+def test_orchestrator_computed_mode_does_not_require_reference_outputs() -> None:
+    source = ROOT / "artifacts" / "step4_exec" / "case02_trace_full"
+    stripped_case = OUT / "case02_inputs_only"
+    _copy_case_inputs_only(source, stripped_case)
+
+    result = run_case_computed_mode(stripped_case, OUT)
+    assert result.output_generated is True
+    assert result.generation_mode == "computed"
+    assert result.fullfit_loaded is True
