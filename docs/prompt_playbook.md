@@ -143,6 +143,23 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - Output: added numerical and indexing kernels with Suite E/F tests.
 - First early failure encountered/fixed in `VT-U-N-010` (inflection test signal threshold interaction), then full suite passed.
 
+25. Gate G4 baseline checkpoint extraction
+- User requested continued fail-safe progression.
+- Output: added `fullfit_stage` reference checkpoint extraction (`CP-FULL-001`) and tests for `VT-I-005`/`VT-N-001`; suite remained green.
+
+26. External-dataset evidence run request
+- User asked how to prove parity for the external test dataset in one run and requested implementation.
+- Output: added `VT-E2E-EVID-001` evidence test and JSON/JUnit artifact generation with per-stage `pass/fail/not_implemented` statuses.
+
+27. Next-gate continuation after evidence
+- User requested proceeding immediately to next gate.
+- Output: started Gate G5 with initial report writers (`table/coord/corraw`) plus contract tests.
+- Encountered environment-specific tmp-directory permission issue; fixed by switching tests to repo-local `tests/.tmp` paths.
+
+28. Commit-point documentation requirement
+- User requested updating the prompt playbook at each commit point.
+- Output: playbook now explicitly updated before every milestone commit.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -177,6 +194,9 @@ Use these directly in future sessions.
 10. Autonomous gate expansion
 - "Proceed to Gate G2/G3 incrementally; after each increment run tests and stop if failures are unfixable."
 
+11. Commit-point playbook update
+- "Before each commit, update `docs/prompt_playbook.md` with latest prompts, decisions, failures/fixes, and outcomes."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -187,6 +207,7 @@ Use these directly in future sessions.
 6. When external review feedback is provided, convert it into requirement IDs plus test IDs, not prose-only edits.
 7. During implementation, enforce an explicit stop condition tied to test failures.
 8. For early numerical failures, patch only the failing kernel/test pair first, rerun, and avoid expanding scope until green.
+9. Update `docs/prompt_playbook.md` before every commit so project memory stays synchronized with git history.
 
 ## Suggested Next Prompt
-- "Continue from current baseline: add orchestration skeleton and checkpoint emitters for Gate G4/G5, keep fail-fast policy, and report test outcomes mapped to Fortran blocks."
+- "Continue Gate G5: connect report writers to a minimal output-stage orchestrator and add contract parity tests against external dataset outputs."

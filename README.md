@@ -50,10 +50,13 @@ Start with these documents:
   - Gate G2 complete (basis/preliminary checkpoint parsers + branch/behavior tests).
   - Gate G3 complete (Step 8 module-aligned numerical kernels, indexing helpers, and unit tests).
   - Gate G4 started (fullfit-stage reference checkpoint extraction + parity tests for full mode).
-- Current test status: `38 passed` (pytest, local workspace).
+  - Gate G5 started (initial `.table/.coord/.corraw` writers with contract tests).
+- Evidence run available: `VT-E2E-EVID-001` (`tests/test_evidence_external_dataset.py`) with JSON/JUnit output.
+- Current test status: `42 passed` (pytest, local workspace).
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
   - `checkpoint/pre_g4_start_20260309`
+  - `checkpoint/pre_g5_start_20260309`
 
 ## Implementation Guidance
 Implementation is being driven by:
