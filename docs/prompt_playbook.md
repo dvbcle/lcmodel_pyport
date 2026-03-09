@@ -9,6 +9,10 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - Built execution-backed understanding using LCModel Windows binary and test fixtures.
 - Produced architecture-driving functional and verification specifications.
 - Added module-to-test traceability and numerical unit-test strategy.
+- Incorporated third-party review feedback into specs:
+  - explicit index conversion safeguards,
+  - explicit typing/schema constraints,
+  - Pythonic error-handling translation requirements.
 
 ## High-Value Prompt Patterns Used
 
@@ -31,6 +35,14 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 5. Repo hygiene prompts
 - Example: "Commit and push all changes."
 - Effect: preserved clear milestone history and synchronized remote state.
+
+6. External review integration prompts
+- Example: "Use this 3rd-party feedback to update relevant step documents."
+- Effect: transformed high-level concerns into concrete requirements and test IDs.
+
+7. Autonomous execution boundary prompts
+- Example: "Proceed autonomously, but stop at first test failure you cannot fix."
+- Effect: establishes safe execution policy for implementation phases.
 
 ## Chronological Prompt Log (Condensed)
 
@@ -106,6 +118,18 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - User requested commit and push.
 - Output: Steps 5-8 and README updates committed and pushed.
 
+19. External gap remediation
+- User provided third-party feedback on index logic, implicit typing, and error handling.
+- Output: Step 6/7/8 updated with explicit requirements (`RQ-015..017`), new unit tests (`VT-U-I/*`, `VT-U-T/*`, `VT-U-E/*`), and architecture safety controls.
+
+20. Session memory request
+- User requested a prompt playbook for future reference.
+- Output: this document created and linked from README.
+
+21. Execution policy for implementation
+- User requested autonomous implementation with early-stop rule on unfixable failing tests and mapping of test outcomes to Fortran code blocks.
+- Output: implementation run policy established.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -131,6 +155,12 @@ Use these directly in future sessions.
 7. Publishing
 - "Stage relevant files only, commit with milestone message, and push to origin main."
 
+8. External review incorporation
+- "Incorporate this review feedback into Step 6/7/8 as requirements, tests, and architecture controls."
+
+9. Autonomous with fail-fast constraint
+- "Proceed autonomously, but stop at the first unfixable test failure and report pass/fail mapped to Fortran blocks."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -138,6 +168,8 @@ Use these directly in future sessions.
 3. Promote output contracts (`.table/.coord/.corraw`) as primary parity targets; treat `.ps` as weak parity.
 4. Maintain README as the single entry point to all artifacts.
 5. Use small, explicit prompts to advance one stage at a time.
+6. When external review feedback is provided, convert it into requirement IDs plus test IDs, not prose-only edits.
+7. During implementation, enforce an explicit stop condition tied to test failures.
 
 ## Suggested Next Prompt (When Implementation Starts)
 - "Start Phase A from Step 8: implement `config` and `io` layers with tests required for Gate G1 only; do not scaffold unrelated modules."
