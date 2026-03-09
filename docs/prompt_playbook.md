@@ -183,6 +183,11 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - Output: expanded `VT-E2E-EVID-001` generated-vs-reference regression checks from full-case only to both full (`case02`) and prelim-only (`case03`) branches.
 - Result: evidence now validates branch-sensitive parity in one run.
 
+33. G7 robustness hardening start
+- User requested autonomous continuation.
+- Output: enforced strict integer parsing for control integer fields (prevents silent float->int coercion) and added explicit error-path tests for missing control/reference files.
+- Result: robustness tests added without breaking existing parity coverage.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -229,6 +234,9 @@ Use these directly in future sessions.
 14. Evidence branch completeness
 - "Ensure evidence runs validate both `DOFULL=T` and `DOFULL=F` branches before tightening tolerances."
 
+15. Type safety hardening
+- "Before expanding solver logic, remove permissive coercions (especially integer controls) and lock behavior with negative-path tests."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -243,6 +251,7 @@ Use these directly in future sessions.
 10. Prefer converting stage placeholders in evidence reports into executable comparisons as soon as parser/writer primitives exist.
 11. For Gate G6 transitions, assert branch behavior (`DOFULL`) and stage-presence flags explicitly before tightening numeric parity.
 12. Expand evidence scope by branch first, then by stricter numeric tolerances.
+13. Add failure-path tests alongside new orchestration/writer code so CI catches missing-file and schema regressions early.
 
 ## Suggested Next Prompt
 - "Continue G6: add true pipeline stage-state objects (instead of parsed-reference state), then keep evidence parity green while swapping one stage at a time."

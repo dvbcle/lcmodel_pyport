@@ -20,6 +20,27 @@ class Assignment:
     raw_value: str
 
 
+def _to_int_strict(name: str, value: object) -> int:
+    if isinstance(value, bool):
+        raise ControlParseError(f"{name} must be integer, got bool")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if value.is_integer():
+            return int(value)
+        raise ControlParseError(f"{name} must be integer, got non-integer float {value}")
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.startswith(("+", "-")):
+            sign = stripped[0]
+            rest = stripped[1:]
+            if rest.isdigit():
+                return int(sign + rest)
+        elif stripped.isdigit():
+            return int(stripped)
+    raise ControlParseError(f"{name} must be integer, got {type(value).__name__}")
+
+
 def _parse_scalar(raw: str) -> object:
     value = raw.strip().rstrip(",")
     lower = value.lower()
@@ -77,8 +98,8 @@ def build_control_config(text: str) -> ControlConfig:
     parsed = parse_control_map(text)
     try:
         cfg = ControlConfig(
-            key=int(parsed["key"]) if "key" in parsed else None,
-            nunfil=int(parsed["nunfil"]),
+            key=_to_int_strict("key", parsed["key"]) if "key" in parsed else None,
+            nunfil=_to_int_strict("nunfil", parsed["nunfil"]),
             deltat=float(parsed["deltat"]),
             hzpppm=float(parsed["hzpppm"]),
             filbas=str(parsed["filbas"]),
@@ -89,14 +110,13 @@ def build_control_config(text: str) -> ControlConfig:
             filcoo=str(parsed["filcoo"]) if "filcoo" in parsed else None,
             filtab=str(parsed["filtab"]) if "filtab" in parsed else None,
             filcor=str(parsed["filcor"]) if "filcor" in parsed else None,
-            lprint=int(parsed.get("lprint", 0)),
-            lcoord=int(parsed.get("lcoord", 0)),
-            ltable=int(parsed.get("ltable", 0)),
-            lcoraw=int(parsed.get("lcoraw", 0)),
-            lps=int(parsed.get("lps", 8)),
+            lprint=_to_int_strict("lprint", parsed.get("lprint", 0)),
+            lcoord=_to_int_strict("lcoord", parsed.get("lcoord", 0)),
+            ltable=_to_int_strict("ltable", parsed.get("ltable", 0)),
+            lcoraw=_to_int_strict("lcoraw", parsed.get("lcoraw", 0)),
+            lps=_to_int_strict("lps", parsed.get("lps", 8)),
         )
     except KeyError as exc:
         raise ControlParseError(f"Missing required control field: {exc.args[0]}") from exc
     validate_control_config(cfg)
     return cfg
-

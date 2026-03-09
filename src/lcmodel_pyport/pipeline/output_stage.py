@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from lcmodel_pyport.config.control_parser import build_control_config
+from lcmodel_pyport.core.errors import OutputContractError
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
 from lcmodel_pyport.report.coord_writer import write_coord
 from lcmodel_pyport.report.corraw_writer import write_corraw
@@ -82,6 +83,9 @@ def generate_outputs_from_reference_case(case_dir: str | Path, out_dir: str | Pa
 
     write_table(out_table, conc_rows, misc_model, list(table["input_changes"]))
     vectors = coord["vectors"]
+    for key in ("ppm_axis", "phased_data", "fit", "background"):
+        if key not in vectors:
+            raise OutputContractError(f"Missing coord vector '{key}'")
     write_coord(
         out_coord,
         ppm_axis=[float(v) for v in vectors["ppm_axis"]],
