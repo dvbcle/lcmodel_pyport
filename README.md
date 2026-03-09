@@ -48,8 +48,9 @@ Start with these documents:
 - Implementation (Python port):
   - Gate G1 complete (`config` + RAW/CORAW + schema validation + basic contracts).
   - Gate G2 complete (basis/preliminary checkpoint parsers + branch/behavior tests).
-  - Gate G3 started (numerical kernels + 1-based/0-based indexing helpers + unit tests).
-- Current test status: `29 passed` (pytest, local workspace).
+  - Gate G3 complete (Step 8 module-aligned numerical kernels, indexing helpers, and unit tests).
+- Current test status: `34 passed` (pytest, local workspace).
+- Rollback checkpoint tag for this phase: `checkpoint/pre_g3_align_20260309`.
 
 ## Implementation Guidance
 Implementation is being driven by:

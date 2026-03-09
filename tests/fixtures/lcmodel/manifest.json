@@ -21,7 +21,60 @@
         "VT-I-002",
         "VT-U-N-006"
       ]
+    },
+    {
+      "id": "case02_trace_full",
+      "description": "Full-analysis trace run with all text outputs enabled",
+      "inputs": {
+        "control": "artifacts/step4_exec/case02_trace_full/control_trace_full.file",
+        "raw": "artifacts/step4_exec/case02_trace_full/data.raw",
+        "basis": "artifacts/step4_exec/case02_trace_full/3t.basis"
+      },
+      "expected_outputs": {
+        "print": "artifacts/step4_exec/case02_trace_full/out_trace_full.print",
+        "coord": "artifacts/step4_exec/case02_trace_full/out_trace_full.coord",
+        "table": "artifacts/step4_exec/case02_trace_full/out_trace_full.table",
+        "corraw": "artifacts/step4_exec/case02_trace_full/out_trace_full.corraw",
+        "ps": "artifacts/step4_exec/case02_trace_full/out_trace_full.ps"
+      },
+      "mode_tags": {
+        "dofull": true,
+        "trace": true
+      },
+      "tolerance_profile": "TOL-Trace",
+      "required_tests": [
+        "VT-I-003",
+        "VT-C-002",
+        "VT-C-003",
+        "VT-C-005",
+        "VT-S-002"
+      ]
+    },
+    {
+      "id": "case03_trace_prelim_only",
+      "description": "Preliminary-only trace run with DOFULL=F",
+      "inputs": {
+        "control": "artifacts/step4_exec/case03_trace_prelim_only/control_trace_prelim.file",
+        "raw": "artifacts/step4_exec/case03_trace_prelim_only/data.raw",
+        "basis": "artifacts/step4_exec/case03_trace_prelim_only/3t.basis"
+      },
+      "expected_outputs": {
+        "print": "artifacts/step4_exec/case03_trace_prelim_only/out_trace_prelim.print",
+        "coord": "artifacts/step4_exec/case03_trace_prelim_only/out_trace_prelim.coord",
+        "table": "artifacts/step4_exec/case03_trace_prelim_only/out_trace_prelim.table",
+        "corraw": "artifacts/step4_exec/case03_trace_prelim_only/out_trace_prelim.corraw",
+        "ps": "artifacts/step4_exec/case03_trace_prelim_only/out_trace_prelim.ps"
+      },
+      "mode_tags": {
+        "dofull": false,
+        "trace": true
+      },
+      "tolerance_profile": "TOL-Trace",
+      "required_tests": [
+        "VT-I-004",
+        "VT-C-005",
+        "VT-S-001"
+      ]
     }
   ]
 }
-

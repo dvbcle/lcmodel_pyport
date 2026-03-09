@@ -3,26 +3,26 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from lcmodel_pyport.core.errors import NumericalConvergenceError, ValidationError
 from lcmodel_pyport.core.indexing import (
     fortran_inclusive_slice,
     fortran_loop_indices,
     window_from_fortran,
 )
-from lcmodel_pyport.numerics.kernels import (
+from lcmodel_pyport.fit.regularization import (
+    count_inflections_extrema,
+    regula_falsi,
+    second_difference_regularization,
+)
+from lcmodel_pyport.fit.snapshots import restore_snapshot, save_snapshot
+from lcmodel_pyport.fit.solver_linear import solve_nonnegative
+from lcmodel_pyport.preprocess.fft_ops import cfft_r, cfftin_r, frequency_reindex
+from lcmodel_pyport.preprocess.shift_phase import (
     apply_first_order_phase,
     apply_zero_order_phase,
-    count_inflections_extrema,
-    covariance_uncertainty,
-    cfft_r,
-    cfftin_r,
-    frequency_reindex,
     integer_shift_phase_ramp,
-    regula_falsi,
-    restore_snapshot,
-    save_snapshot,
-    second_difference_regularization,
-    solve_nonnegative,
 )
+from lcmodel_pyport.report.diagnostics import covariance_uncertainty
 
 # Traceability:
 # - VT-U-N-001, VT-U-N-002 map to LCModel.f:12890-12905, 12955-12963
@@ -87,6 +87,11 @@ def test_vt_u_n_008_regula_falsi_search_behavior() -> None:
     assert root == pytest.approx(np.sqrt(2.0), abs=1e-9)
 
 
+def test_vt_u_n_008_regula_falsi_requires_bracket() -> None:
+    with pytest.raises(ValidationError):
+        regula_falsi(lambda z: z * z + 1.0, -1.0, 1.0)
+
+
 def test_vt_u_n_009_regularization_matrix_construction() -> None:
     reg = second_difference_regularization(6)
     assert reg.shape == (6, 6)
@@ -122,6 +127,11 @@ def test_vt_u_n_012_covariance_uncertainty_sanity() -> None:
     assert unc[1] == pytest.approx(1.0)
 
 
+def test_vt_u_n_012_covariance_rejects_nonsquare() -> None:
+    with pytest.raises(ValidationError):
+        covariance_uncertainty(np.array([[1.0, 2.0, 3.0]]))
+
+
 def test_vt_u_n_013_window_index_mapping_integrity() -> None:
     out = window_from_fortran(10, 20, 100)
     assert out == {"start_0b": 9, "end_0b_exclusive": 20, "ny": 11}
@@ -136,3 +146,10 @@ def test_vt_u_i_002_slice_boundary_equivalence() -> None:
     arr = np.arange(10)
     sl = fortran_inclusive_slice(2, 5)
     assert np.array_equal(arr[sl], np.array([1, 2, 3, 4]))
+
+
+def test_vt_u_n_007_solver_nonconvergence_raises() -> None:
+    a = np.eye(4)
+    b = np.ones(4)
+    with pytest.raises(NumericalConvergenceError):
+        solve_nonnegative(a, b, max_iter=0)
