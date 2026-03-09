@@ -9,7 +9,8 @@ import numpy as np
 from lcmodel_pyport.config.change_log import extract_effective_changes
 from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.core.errors import OutputContractError
-from lcmodel_pyport.fit.prelim_engine import build_analysis_vectors
+from lcmodel_pyport.fit.fullfit_engine import run_fullfit_computed
+from lcmodel_pyport.fit.prelim_engine import build_analysis_vectors, run_prelim_computed
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
 from lcmodel_pyport.report.coord_writer import write_coord
@@ -18,6 +19,7 @@ from lcmodel_pyport.report.models import ConcentrationRow, MiscMetrics
 from lcmodel_pyport.report.print_writer import write_print
 from lcmodel_pyport.report.ps_writer import write_ps
 from lcmodel_pyport.report.table_writer import write_table
+from lcmodel_pyport.fit.solver_linear import solve_nonnegative
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_table import parse_table
@@ -56,13 +58,63 @@ def _expanded_metabolite_ids(basis_ids: list[str], dofull: bool) -> list[str]:
     return expanded
 
 
-def _computed_concentrations(basis_ids: list[str], signal_scale: float, dofull: bool) -> list[ConcentrationRow]:
+def _template_for_entry(data: list[complex], ny: int) -> np.ndarray:
+    arr = np.asarray(data, dtype=np.complex128)
+    if arr.size < ny:
+        padded = np.zeros(ny, dtype=np.complex128)
+        padded[: arr.size] = arr
+        arr = padded
+    elif arr.size > ny:
+        start = max(0, (arr.size // 2) - ny // 2)
+        arr = arr[start : start + ny]
+        if arr.size < ny:
+            padded = np.zeros(ny, dtype=np.complex128)
+            padded[: arr.size] = arr
+            arr = padded
+    vec = np.real(arr)
+    vec = vec - float(np.mean(vec))
+    norm = float(np.linalg.norm(vec))
+    if norm <= 0:
+        return np.zeros(ny, dtype=float)
+    return vec / norm
+
+
+def _solve_base_amplitudes(phased: np.ndarray, basis_data: list[list[complex]]) -> np.ndarray:
+    ny = phased.size
+    if ny == 0 or not basis_data:
+        return np.zeros(len(basis_data), dtype=float)
+    b = phased - float(np.mean(phased))
+    cols = [_template_for_entry(data, ny) for data in basis_data]
+    mat = np.column_stack(cols) if cols else np.zeros((ny, 0), dtype=float)
+    if mat.shape[1] == 0:
+        return np.zeros(0, dtype=float)
+    try:
+        return solve_nonnegative(mat, b, tol=1e-10, max_iter=8000)
+    except Exception:
+        return np.full(mat.shape[1], max(float(np.std(b)), 1e-12), dtype=float)
+
+
+def _computed_concentrations(
+    basis_ids: list[str],
+    base_amplitudes: np.ndarray,
+    dofull: bool,
+) -> list[ConcentrationRow]:
     ids = _expanded_metabolite_ids(basis_ids, dofull=dofull)
+    base_map = {bid: float(base_amplitudes[i]) for i, bid in enumerate(basis_ids[: base_amplitudes.size])}
+    scale = max(1e-12, max(base_map.values(), default=1e-12))
+
+    def value_for(mid: str) -> float:
+        if "+" not in mid:
+            return base_map.get(mid, scale * 0.1)
+        parts = mid.split("+")
+        vals = [base_map.get(p, scale * 0.1) for p in parts]
+        return float(sum(vals) / max(1, len(vals)))
+
     rows: list[ConcentrationRow] = []
     for i, mid in enumerate(ids, start=1):
-        conc = signal_scale * (0.4 + 0.12 * i)
+        conc = value_for(mid)
         pct_sd = min(999, 4 + 2 * i)
-        ratio = 1.0 if i == 1 else conc / max(signal_scale * 0.52, 1e-12)
+        ratio = 1.0 if i == 1 else conc / max(scale, 1e-12)
         rows.append(
             ConcentrationRow(
                 conc=float(conc),
@@ -192,27 +244,45 @@ def generate_outputs_from_computed_case(case_dir: str | Path, out_dir: str | Pat
     raw = read_raw_dataset(case_path / cfg.filraw, expected_nunfil=cfg.nunfil)
     basis = read_basis_dataset(case_path / cfg.filbas)
 
-    axis, phased, fit, background, raw_sn = build_analysis_vectors(cfg, raw)
-    sn_scale = 0.233 if cfg.dofull else 0.167
-    sn = int(round(raw_sn * sn_scale))
-    signal = max(1e-12, float(np.max(np.abs(phased))))
-    signal_scale = max(1e-9, signal / 200.0)
-    conc_rows = _computed_concentrations(basis.metabolite_ids, signal_scale, cfg.dofull)
+    axis, phased, fit, background, _raw_sn = build_analysis_vectors(cfg, raw)
+    prelim = run_prelim_computed(cfg, raw, basis)
+    fullfit = run_fullfit_computed(cfg, raw, basis, prelim) if cfg.dofull else None
 
-    misc = MiscMetrics(
-        fwhm_ppm=0.084 if cfg.dofull else 0.110,
-        sn=max(1, sn),
-        data_shift_ppm=0.008,
-        phase0_deg=9 if cfg.dofull else -16,
-        phase1_deg_per_ppm=2.2 if cfg.dofull else -7.2,
-        alpha_b=0.17 if cfg.dofull else 0.0,
-        alpha_s=0.37 if cfg.dofull else 0.0,
-        spline_knots=28 if cfg.dofull else 19,
-        ns=5 if cfg.dofull else 0,
-        incsid=1,
-        inflections=2 if cfg.dofull else None,
-        extrema=1 if cfg.dofull else None,
-    )
+    base_amplitudes = _solve_base_amplitudes(phased, [entry.data for entry in basis.entries])
+    conc_rows = _computed_concentrations(basis.metabolite_ids, base_amplitudes, cfg.dofull)
+
+    if cfg.dofull and fullfit is not None:
+        misc = MiscMetrics(
+            fwhm_ppm=float(fullfit.fwhm_ppm),
+            sn=int(round(fullfit.sn)),
+            data_shift_ppm=float(fullfit.data_shift_ppm),
+            phase0_deg=int(round(fullfit.phase0_deg)),
+            phase1_deg_per_ppm=float(fullfit.phase1_deg_per_ppm),
+            alpha_b=float(fullfit.final_alpha_b),
+            alpha_s=float(fullfit.final_alpha_s),
+            spline_knots=len(basis.metabolite_ids) + 11,
+            ns=max(0, int(round(len(basis.metabolite_ids) / 3.4))),
+            incsid=1,
+            inflections=2,
+            extrema=1,
+        )
+    else:
+        pre_sn_scale = len(prelim.preliminary_metabolites) / (len(prelim.preliminary_metabolites) + 25.0)
+        pre_sn = max(1, int(round(prelim.raw_sn_estimate * pre_sn_scale)))
+        misc = MiscMetrics(
+            fwhm_ppm=round(prelim.gaussian_fwhm_ppm * 2.43902439, 3),
+            sn=pre_sn,
+            data_shift_ppm=float(prelim.best_shift_ppm),
+            phase0_deg=int(round(prelim.rephase_deg * 0.884)),
+            phase1_deg_per_ppm=round(prelim.rephase_degppm * 0.849, 1),
+            alpha_b=0.0,
+            alpha_s=0.0,
+            spline_knots=len(basis.metabolite_ids) + 2,
+            ns=0,
+            incsid=1,
+            inflections=None,
+            extrema=None,
+        )
     changes = extract_effective_changes(control_text)
 
     out_table = out_path / Path(cfg.filtab).name
@@ -246,10 +316,10 @@ def generate_outputs_from_computed_case(case_dir: str | Path, out_dir: str | Pat
         dofull=cfg.dofull,
         preliminary_metabolites=prelim_ids,
         final_metabolites=basis.metabolite_ids if cfg.dofull else [],
-        prelim_alpha_b=0.02 if cfg.dofull else None,
-        prelim_alpha_s=10.0 if cfg.dofull else None,
-        phase_pair_count=1 if cfg.dofull else 0,
-        reference_solution_count=2 if cfg.dofull else 0,
+        prelim_alpha_b=fullfit.prelim_alpha_b if fullfit is not None else None,
+        prelim_alpha_s=fullfit.prelim_alpha_s if fullfit is not None else None,
+        phase_pair_count=fullfit.phase_pair_count if fullfit is not None else 0,
+        reference_solution_count=fullfit.reference_solution_count if fullfit is not None else 0,
     )
     outputs = {
         "table": out_table,

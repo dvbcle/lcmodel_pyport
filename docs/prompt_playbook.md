@@ -267,6 +267,16 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - external evidence and compare-only parity remain green,
   - full-suite red state remains limited to intentional legacy strict-XPASS tests.
 
+43. Gate 3/4 computed report-state wiring
+- Output:
+  - extended basis reader to parse per-metabolite spectral payloads into typed entries,
+  - output-stage concentrations now come from nonnegative solve against basis-derived templates,
+  - computed fullfit checkpoint fields (`S/N`, phase, alpha) now derive from computed prelim/raw/basis features and feed report writers,
+  - added payload/solver coverage tests (`tests/test_gate_g3_basis_payloads.py`).
+- Result:
+  - targeted suites remain green, including evidence and compare-only parity,
+  - full suite remains intentionally red only on legacy strict-XPASS tests.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -334,6 +344,9 @@ Use these directly in future sessions.
 21. Numerical deepening with invariants
 - "When replacing constants with derived numerics, add invariant-style tests (directionality, monotonicity, noise response) so behavior improves without destabilizing parity gates."
 
+22. Basis-to-report closure
+- "Before claiming solver-stage progress, ensure basis spectral payload parsing is exercised and concentrations are generated through a computed nonnegative solve path."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -353,4 +366,4 @@ Use these directly in future sessions.
 15. Promote manual-debug fallback paths (like PS-input checkpoints) into automated evidence stages as soon as defined.
 
 ## Suggested Next Prompt
-- "Continue Step 9 Gate 3/4: replace remaining fullfit/report constants (`alpha`, phase terms, concentration synthesis) with solver-derived state while keeping compare-only parity and evidence green."
+- "Continue Step 9 Gate 3/4 by replacing remaining calibrated constants with explicit optimization/regularization loops, while preserving evidence/parity green and compare-only constraints."

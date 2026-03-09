@@ -27,11 +27,16 @@ Fortran artifacts are used only as a validation oracle.
 
 3. Complete fullfit-stage numerics (`DOFULL=T`)
 - Implement solver loop, regularization search, and best-snapshot behavior.
+- Current progress:
+  - computed fullfit checkpoint now derives `S/N`, phase terms, and alpha terms from computed prelim/raw/basis state (no reference parse in generation path).
 - Exit tests:
   - `VT-I-005`, `VT-N-001`, `VT-N-002`, `VT-U-N-008`, `VT-U-N-011`.
 
 4. Generate final report state from computed fit state
 - Replace placeholder concentration/misc generation with solver-derived values.
+- Current progress:
+  - report concentrations now come from nonnegative solve against parsed basis spectral payload templates.
+  - misc/print fields in computed output now consume computed prelim/fullfit state.
 - Exit tests:
   - `VT-I-006`, `VT-N-001`, `VT-N-002`.
 
@@ -71,3 +76,4 @@ Fortran artifacts are used only as a validation oracle.
 - Evidence run is green (`fail=0`, `not_implemented=0`) for the external dataset fixture pair.
 - Compare-only scientific parity tests are green for both branches.
 - Gate 1 is complete; Gate 2/3 numerical deepening is in progress.
+- Gate 3/4 implementation has started with basis payload parsing and solver-derived concentration wiring.

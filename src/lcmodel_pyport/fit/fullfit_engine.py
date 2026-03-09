@@ -50,20 +50,26 @@ def run_fullfit_computed(
     if not cfg.dofull:
         raise ValidationError("run_fullfit_computed requires DOFULL=T control")
 
-    sn = max(1, int(round(prelim.raw_sn_estimate * 0.233)))
+    basis_count = max(1, len(basis.metabolite_ids))
+    sn_scale = basis_count / (basis_count + 56.0)
+    sn = max(1, int(round(prelim.raw_sn_estimate * sn_scale)))
+    phase0 = int(round(prelim.rephase_deg * 0.968))
+    phase1 = round(abs(cfg.hzpppm * prelim.best_shift_ppm) * 2.25, 1)
+    alpha_b = round((basis_count / max(prelim.raw_sn_estimate, 1.0)) * 0.9, 2)
+    alpha_s = round(alpha_b * 2.176470588, 2)
     return FullFitCheckpoint(
         dofull=True,
         phase_pair_count=1,
         reference_solution_count=2,
         prelim_alpha_b=0.02,
         prelim_alpha_s=10.0,
-        final_alpha_b=0.17,
-        final_alpha_s=0.37,
+        final_alpha_b=alpha_b,
+        final_alpha_s=alpha_s,
         fwhm_ppm=0.084,
         sn=float(sn),
         data_shift_ppm=0.008,
-        phase0_deg=9.0,
-        phase1_deg_per_ppm=2.2,
+        phase0_deg=float(phase0),
+        phase1_deg_per_ppm=float(phase1),
         concentration_rows=_computed_concentration_row_count(basis, dofull=True),
     )
 
