@@ -17,4 +17,5 @@ def test_vt_e2e_evid_001_external_dataset() -> None:
 
     assert evidence["evidence_id"] == "VT-E2E-EVID-001"
     assert evidence["summary"]["fail"] == 0
-    assert evidence["summary"]["pass"] >= 6
+    assert evidence["summary"]["not_implemented"] == 0
+    assert evidence["summary"]["pass"] >= 8

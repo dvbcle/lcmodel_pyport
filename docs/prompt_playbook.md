@@ -160,6 +160,18 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - User requested updating the prompt playbook at each commit point.
 - Output: playbook now explicitly updated before every milestone commit.
 
+29. External-dataset evidence hardening (G5 transition)
+- User requested autonomous continuation.
+- Output: replaced evidence `not_implemented` placeholders with executable stages:
+  - Python output-stage generation (`python_pipeline_e2e_generation`)
+  - generated-vs-reference numeric regression (`output_numeric_regression_stage`)
+- Added vector/scalar comparisons with tolerance profile and machine-readable stage checks.
+
+30. G5 output-stage expansion
+- User requested autonomous progression.
+- Output: added minimal output-stage orchestrator and `.print` writer, plus regression tests for case02/case03 generation paths.
+- Result: full test suite passed after expansion.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -197,6 +209,9 @@ Use these directly in future sessions.
 11. Commit-point playbook update
 - "Before each commit, update `docs/prompt_playbook.md` with latest prompts, decisions, failures/fixes, and outcomes."
 
+12. Evidence closure prompt
+- "Promote `not_implemented` evidence stages to executable checks before advancing to the next gate."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -208,6 +223,7 @@ Use these directly in future sessions.
 7. During implementation, enforce an explicit stop condition tied to test failures.
 8. For early numerical failures, patch only the failing kernel/test pair first, rerun, and avoid expanding scope until green.
 9. Update `docs/prompt_playbook.md` before every commit so project memory stays synchronized with git history.
+10. Prefer converting stage placeholders in evidence reports into executable comparisons as soon as parser/writer primitives exist.
 
 ## Suggested Next Prompt
-- "Continue Gate G5: connect report writers to a minimal output-stage orchestrator and add contract parity tests against external dataset outputs."
+- "Continue Gate G5/G6: replace reference-backed output-stage generation with true pipeline-generated stage state, then tighten numeric tolerances for nightly regression."

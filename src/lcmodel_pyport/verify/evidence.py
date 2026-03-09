@@ -11,11 +11,14 @@ from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.fit.fullfit_engine import run_fullfit_reference
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
+from lcmodel_pyport.pipeline.output_stage import generate_outputs_from_reference_case
+from lcmodel_pyport.verify.compare import close_scalar, max_abs_delta, rmse
 from lcmodel_pyport.verify.fixtures import load_checksums, verify_checksum
 from lcmodel_pyport.verify.parsers_coord import parse_coord
 from lcmodel_pyport.verify.parsers_corraw import parse_corraw
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_table import parse_table
+from lcmodel_pyport.verify.tolerances import ToleranceProfile
 
 
 @dataclass(frozen=True)
@@ -54,6 +57,7 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
     cp_root = root / "tests" / "fixtures" / "lcmodel" / "checkpoints"
 
     stages: list[StageEvidence] = []
+    tol = ToleranceProfile(float_abs=1e-4, float_rel=1e-3, vector_rmse=5e-3, vector_max_abs=2e-2)
 
     checksum_paths = [
         "artifacts/step4_exec/case02_trace_full/control_trace_full.file",
@@ -250,20 +254,115 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
             _stage_fail("output_contract_stage", f"Output contract stage failed: {exc}", {}, ["LCModel.f:10423-10427"])
         )
 
-    stages.append(
-        _stage_not_impl(
-            "python_pipeline_e2e_generation",
-            "No end-to-end Python pipeline/writer generation path implemented yet for external dataset.",
-            ["docs/step8_python_architecture_proposal.md:294-296"],
+    generated_dir = root / "tests" / ".tmp" / "generated_external_case02"
+    try:
+        generated = generate_outputs_from_reference_case(
+            root / "artifacts" / "step4_exec" / "case02_trace_full",
+            generated_dir,
         )
-    )
-    stages.append(
-        _stage_not_impl(
-            "output_numeric_regression_stage",
-            "Python-generated outputs not available yet; numeric regression currently against parsed Fortran references.",
-            ["docs/step7_test_harness_tdd_outline.md:232-239"],
+        files_exist = all(path.exists() for path in generated.values())
+        stages.append(
+            _stage_pass(
+                "python_pipeline_e2e_generation",
+                "Python output-stage generation produced all expected files.",
+                {"generated_files": {k: str(v) for k, v in generated.items()}},
+                ["docs/step8_python_architecture_proposal.md:294-296"],
+            )
+            if files_exist
+            else _stage_fail(
+                "python_pipeline_e2e_generation",
+                "Generated outputs missing expected files.",
+                {"generated_files": {k: str(v) for k, v in generated.items()}},
+                ["docs/step8_python_architecture_proposal.md:294-296"],
+            )
         )
-    )
+    except Exception as exc:  # pragma: no cover
+        stages.append(
+            _stage_fail(
+                "python_pipeline_e2e_generation",
+                f"Python output-stage generation failed: {exc}",
+                {},
+                ["docs/step8_python_architecture_proposal.md:294-296"],
+            )
+        )
+        generated = {}
+
+    try:
+        if not generated:
+            raise RuntimeError("generated outputs unavailable")
+        ref_table = parse_table(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.table")
+        py_table = parse_table(generated["table"])
+        ref_coord = parse_coord(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.coord")
+        py_coord = parse_coord(generated["coord"])
+        ref_print = parse_print(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.print")
+        py_print = parse_print(generated["print"])
+        ref_cor = parse_corraw(root / "artifacts" / "step4_exec" / "case02_trace_full" / "out_trace_full.corraw")
+        py_cor = parse_corraw(generated["corraw"])
+
+        checks: dict[str, Any] = {}
+        checks["table_sections_match"] = ref_table["sections_order"] == py_table["sections_order"]
+        checks["concentration_rows_match"] = ref_table["concentration_rows"] == py_table["concentration_rows"]
+        checks["print_dofull_match"] = ref_print["dofull"] == py_print["dofull"]
+        checks["print_phase_pair_count_match"] = ref_print["phase_pair_count"] == py_print["phase_pair_count"]
+        checks["corraw_n_points_match"] = ref_cor["n_points"] == py_cor["n_points"]
+
+        scalar_ok = True
+        scalar_deltas: dict[str, float] = {}
+        for key in ("fwhm_ppm", "sn", "data_shift_ppm", "phase0_deg", "phase1_deg_per_ppm", "alpha_b", "alpha_s"):
+            rv = float(ref_table["misc_metrics"][key])
+            pv = float(py_table["misc_metrics"][key])
+            scalar_deltas[key] = abs(rv - pv)
+            if not close_scalar(pv, rv, abs_tol=tol.float_abs, rel_tol=tol.float_rel):
+                scalar_ok = False
+        checks["misc_scalar_deltas"] = scalar_deltas
+        checks["misc_scalars_within_tolerance"] = scalar_ok
+
+        vector_ok = True
+        vector_metrics: dict[str, dict[str, float]] = {}
+        for key in ("ppm_axis", "phased_data", "fit", "background"):
+            rv = [float(x) for x in ref_coord["vectors"][key]]
+            pv = [float(x) for x in py_coord["vectors"][key]]
+            vrmse = rmse(rv, pv)
+            vmax = max_abs_delta(rv, pv)
+            vector_metrics[key] = {"rmse": vrmse, "max_abs": vmax}
+            if vrmse > tol.vector_rmse or vmax > tol.vector_max_abs:
+                vector_ok = False
+        checks["vector_metrics"] = vector_metrics
+        checks["vectors_within_tolerance"] = vector_ok
+
+        overall_ok = (
+            checks["table_sections_match"]
+            and checks["concentration_rows_match"]
+            and checks["print_dofull_match"]
+            and checks["print_phase_pair_count_match"]
+            and checks["corraw_n_points_match"]
+            and checks["misc_scalars_within_tolerance"]
+            and checks["vectors_within_tolerance"]
+        )
+        stages.append(
+            _stage_pass(
+                "output_numeric_regression_stage",
+                "Generated outputs match reference contracts and numeric tolerances.",
+                checks,
+                ["docs/step7_test_harness_tdd_outline.md:232-239"],
+            )
+            if overall_ok
+            else _stage_fail(
+                "output_numeric_regression_stage",
+                "Generated outputs failed contract or numeric tolerance checks.",
+                checks,
+                ["docs/step7_test_harness_tdd_outline.md:232-239"],
+            )
+        )
+    except Exception as exc:  # pragma: no cover
+        stages.append(
+            _stage_fail(
+                "output_numeric_regression_stage",
+                f"Numeric regression stage failed: {exc}",
+                {},
+                ["docs/step7_test_harness_tdd_outline.md:232-239"],
+            )
+        )
 
     out = {
         "evidence_id": "VT-E2E-EVID-001",

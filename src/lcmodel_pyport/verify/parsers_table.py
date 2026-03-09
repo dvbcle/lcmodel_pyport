@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 _CONC_ROW_RE = re.compile(
-    r"^\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)\s+\d+%\s+[^\s]+\s+(\S+)\s*$"
+    r"^\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)\s+(\d+)%\s+(\S+)\s+(\S+)\s*$"
 )
 _FWHM_SN_RE = re.compile(
     r"FWHM\s*=\s*([+-]?\d+(?:\.\d+)?)\s*ppm\s+S/N\s*=\s*([+-]?\d+)"
@@ -16,6 +16,8 @@ _PHASE_RE = re.compile(r"Ph:\s*([+-]?\d+)\s*deg\s*([+-]?\d+(?:\.\d+)?)\s*deg/ppm
 _ALPHA_RE = re.compile(
     r"alphaB,S\s*=\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?),\s*([+-]?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)"
 )
+_SPLINE_RE = re.compile(r"(\d+)\s+spline knots\.\s+Ns\s*=\s*(\d+)\((\d+)\)")
+_INFLEX_RE = re.compile(r"(\d+)\s+inflections\.\s+(\d+)\s+extrema")
 
 
 def parse_table(path: str | Path) -> dict[str, object]:
@@ -37,7 +39,14 @@ def parse_table(path: str | Path) -> dict[str, object]:
         m = _CONC_ROW_RE.match(line)
         if not m:
             continue
-        conc_rows.append({"metabolite": m.group(2), "conc": float(m.group(1))})
+        conc_rows.append(
+            {
+                "metabolite": m.group(4),
+                "conc": float(m.group(1)),
+                "pct_sd": int(m.group(2)),
+                "ratio_label": m.group(3),
+            }
+        )
 
     misc_metrics: dict[str, float] = {}
     for raw in by_section.get("$$MISC", []):
@@ -60,11 +69,26 @@ def parse_table(path: str | Path) -> dict[str, object]:
         if m:
             misc_metrics["alpha_b"] = float(m.group(1))
             misc_metrics["alpha_s"] = float(m.group(2))
+            continue
+        m = _SPLINE_RE.search(line)
+        if m:
+            misc_metrics["spline_knots"] = float(m.group(1))
+            misc_metrics["ns"] = float(m.group(2))
+            misc_metrics["incsid"] = float(m.group(3))
+            continue
+        m = _INFLEX_RE.search(line)
+        if m:
+            misc_metrics["inflections"] = float(m.group(1))
+            misc_metrics["extrema"] = float(m.group(2))
+
+    input_changes = [line.strip() for line in by_section.get("$$INPU", []) if line.strip()]
 
     return {
         "sections_order": sections,
         "sections": by_section,
         "concentration_rows": len(conc_rows),
+        "concentration_details": conc_rows,
         "concentration_metabolites": [row["metabolite"] for row in conc_rows],
         "misc_metrics": misc_metrics,
+        "input_changes": input_changes,
     }
