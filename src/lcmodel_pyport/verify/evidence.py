@@ -11,7 +11,7 @@ from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.fit.fullfit_engine import run_fullfit_reference
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
-from lcmodel_pyport.pipeline.orchestrator import run_case_reference_mode
+from lcmodel_pyport.pipeline.orchestrator import run_case_computed_mode
 from lcmodel_pyport.verify.compare import close_scalar, max_abs_delta, rmse
 from lcmodel_pyport.verify.fixtures import load_checksums, verify_checksum
 from lcmodel_pyport.verify.parsers_coord import parse_coord
@@ -258,11 +258,11 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
 
     generated_dir = root / "tests" / ".tmp" / "generated_external_cases"
     try:
-        orchestration_full = run_case_reference_mode(
+        orchestration_full = run_case_computed_mode(
             root / "artifacts" / "step4_exec" / "case02_trace_full",
             generated_dir,
         )
-        orchestration_prelim = run_case_reference_mode(
+        orchestration_prelim = run_case_computed_mode(
             root / "artifacts" / "step4_exec" / "case03_trace_prelim_only",
             generated_dir,
         )
@@ -279,7 +279,7 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
         stages.append(
             _stage_pass(
                 "python_pipeline_e2e_generation",
-                "Python reference-mode orchestration produced all expected files.",
+                "Python computed-mode orchestration produced all expected files.",
                 {
                     "generated_files": {
                         "case02": {k: str(v) for k, v in orchestration_full.output_paths.items()},
@@ -287,8 +287,10 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
                     },
                     "case02_dofull": orchestration_full.dofull,
                     "case02_fullfit_loaded": orchestration_full.fullfit_loaded,
+                    "case02_generation_mode": orchestration_full.generation_mode,
                     "case03_dofull": orchestration_prelim.dofull,
                     "case03_fullfit_loaded": orchestration_prelim.fullfit_loaded,
+                    "case03_generation_mode": orchestration_prelim.generation_mode,
                 },
                 ["docs/step8_python_architecture_proposal.md:294-296"],
             )
@@ -303,8 +305,10 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
                     },
                     "case02_dofull": orchestration_full.dofull,
                     "case02_fullfit_loaded": orchestration_full.fullfit_loaded,
+                    "case02_generation_mode": orchestration_full.generation_mode,
                     "case03_dofull": orchestration_prelim.dofull,
                     "case03_fullfit_loaded": orchestration_prelim.fullfit_loaded,
+                    "case03_generation_mode": orchestration_prelim.generation_mode,
                 },
                 ["docs/step8_python_architecture_proposal.md:294-296"],
             )

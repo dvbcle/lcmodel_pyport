@@ -9,7 +9,10 @@ from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.fit.fullfit_engine import FullFitCheckpoint, run_fullfit_reference
 from lcmodel_pyport.io.basis_reader import BasisDataset, read_basis_dataset
 from lcmodel_pyport.io.raw_reader import RawDataset, read_raw_dataset
-from lcmodel_pyport.pipeline.output_stage import generate_outputs_from_reference_case
+from lcmodel_pyport.pipeline.output_stage import (
+    generate_outputs_from_computed_case,
+    generate_outputs_from_reference_case,
+)
 from lcmodel_pyport.verify.parsers_print import parse_print
 
 
@@ -23,6 +26,7 @@ class OrchestrationResult:
     prelim_loaded: bool
     fullfit_loaded: bool
     output_generated: bool
+    generation_mode: str
     output_paths: dict[str, Path]
 
 
@@ -75,5 +79,43 @@ def run_case_reference_mode(case_dir: str | Path, output_root: str | Path) -> Or
         prelim_loaded=True,
         fullfit_loaded=cfg.dofull,
         output_generated=all(path.exists() for path in output_paths.values()),
+        generation_mode="reference",
+        output_paths=output_paths,
+    )
+
+
+def run_case_computed_mode(case_dir: str | Path, output_root: str | Path) -> OrchestrationResult:
+    """Run stage flow with computed output generation (no reference output parsing for writes)."""
+    case_path = Path(case_dir)
+    output_root_path = Path(output_root)
+    output_root_path.mkdir(parents=True, exist_ok=True)
+
+    control_path = _find_control_file(case_path)
+    cfg = build_control_config(control_path.read_text(encoding="utf-8"))
+    _raw: RawDataset = read_raw_dataset(case_path / cfg.filraw, expected_nunfil=cfg.nunfil)
+    _basis: BasisDataset = read_basis_dataset(case_path / cfg.filbas)
+    _prelim = parse_print(_find_reference_file(case_path, ".print"))
+    _ = _raw, _basis, _prelim
+
+    fullfit: FullFitCheckpoint | None = None
+    if cfg.dofull:
+        fullfit = run_fullfit_reference(
+            _find_reference_file(case_path, ".print"),
+            _find_reference_file(case_path, ".table"),
+        )
+    _ = fullfit
+
+    out_dir = output_root_path / case_path.name
+    output_paths = generate_outputs_from_computed_case(case_path, out_dir)
+    return OrchestrationResult(
+        case_dir=case_path,
+        dofull=cfg.dofull,
+        control_loaded=True,
+        raw_loaded=True,
+        basis_loaded=True,
+        prelim_loaded=True,
+        fullfit_loaded=cfg.dofull,
+        output_generated=all(path.exists() for path in output_paths.values()),
+        generation_mode="computed",
         output_paths=output_paths,
     )

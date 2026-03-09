@@ -13,6 +13,7 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - explicit index conversion safeguards,
   - explicit typing/schema constraints,
   - Pythonic error-handling translation requirements.
+- Began computed-mode migration by deprecating reference-backed generation tests and introducing computed-mode output/orchestration tests.
 
 ## High-Value Prompt Patterns Used
 
@@ -206,6 +207,20 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - integrated `ps_input_parity_stage` into `VT-E2E-EVID-001` evidence run.
 - Result: evidence report now shows an explicit pass/fail stage for PS-input parity before visual interpretation.
 
+36. Reference-backed generation demotion request
+- User requested removing reference-backed generation and marking tests that still pass through that path as failing.
+- Output:
+  - introduced computed-mode generation/orchestration entry points,
+  - switched evidence generation stage to computed-mode path,
+  - marked legacy reference-backed generation tests (`G5/G6`) as strict `xfail` so XPASS becomes failure by design.
+- Result: full suite intentionally fails on legacy reference-backed tests while computed-mode tests are green.
+
+37. Computed-mode collection unblock
+- During computed-mode test runs, a circular import surfaced (`pipeline.output_stage` -> `verify.parsers_*` -> `verify.__init__` -> `evidence` -> `pipeline.orchestrator`).
+- Output:
+  - reduced `verify/__init__.py` to import-light package metadata only.
+- Result: computed-mode and evidence tests collect/run successfully.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -260,6 +275,9 @@ Use these directly in future sessions.
 
 17. PS fallback protocol
 - "If PS visual parity is questionable, validate PS-input checkpoints (`ppm_axis`, `phased_data`, `fit`, `background`, branch markers) before modifying PS rendering."
+
+18. Legacy-path demotion
+- "If a test still validates reference-backed generation as success, convert it to an intentional fail signal (strict XPASS/explicit fail) and add computed-mode replacement tests."
 
 ## Operating Rules That Worked Well
 

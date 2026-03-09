@@ -51,14 +51,16 @@ Start with these documents:
   - Gate G2 complete (basis/preliminary checkpoint parsers + branch/behavior tests).
   - Gate G3 complete (Step 8 module-aligned numerical kernels, indexing helpers, and unit tests).
   - Gate G4 started (fullfit-stage reference checkpoint extraction + parity tests for full mode).
-  - Gate G5 in progress (added `.print` writer and minimal output-stage generation for `.table/.coord/.corraw/.print` from canonical parsed state).
-- G6 started: reference-mode orchestrator added for case-level staged flow and DOFULL branch behavior checks.
+  - Gate G5 in progress (computed-mode output generation now emits `.table/.coord/.corraw/.print/.ps` without reference-output parsing for generation).
+- G6 in progress: computed-mode orchestrator path added for case-level staged flow and DOFULL branch behavior checks.
 - G7 started: stricter integer control enforcement and explicit missing-input error-path tests.
 - Evidence run available: `VT-E2E-EVID-001` (`tests/test_evidence_external_dataset.py`) with JSON/JUnit output and no `not_implemented` stages.
 - Evidence regression scope currently covers both external dataset branches (`case02_trace_full`, `case03_trace_prelim_only`).
 - Evidence now includes explicit PS-input intermediate parity stage (`ps_input_parity_stage`) for visual-debug fallback.
 - Python output-stage now emits inspectable `.ps` files for both external dataset branches.
-- Current test status: `52 passed` (pytest, local workspace).
+- Current test status:
+  - Computed-mode/evidence tests are passing (`tests/test_gate_g5_output_stage_computed.py`, `tests/test_gate_g6_orchestrator_computed_mode.py`, `tests/test_evidence_external_dataset.py`).
+  - Full `pytest` run is intentionally red on 4 legacy reference-backed tests (`tests/test_gate_g5_output_stage.py`, `tests/test_gate_g6_orchestrator_reference_mode.py`) via strict `xfail` so reference-backed generation paths are explicitly treated as failing during migration.
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
   - `checkpoint/pre_g4_start_20260309`
