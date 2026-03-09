@@ -27,7 +27,10 @@ Start with these documents:
 2. [Step 1: Routine Inventory (TSV)](docs/step1_routine_inventory.tsv)
 3. [Step 2: Program Flow and Function Breakdown](docs/step2_program_flow_function_breakdown.md)
 4. [Step 4: Execution Behavior and Golden Runs](docs/step4_execution_behavior.md)
-5. [Step 7: Reusable Test Harness Outline](docs/step7_test_harness_tdd_outline.md)
+5. [Step 5: CLI Manual Cross-Check](docs/step5_cli_manual_crosscheck.md)
+6. [Step 6: Porting-Grade Functional Specifications](docs/step6_porting_functional_specs.md)
+7. [Step 7: Verification Strategy and Test Harness Spec](docs/step7_test_harness_tdd_outline.md)
+8. [Step 8: Python Architecture Proposal](docs/step8_python_architecture_proposal.md)
 
 ## Current Plan (Reordered)
 1. Baseline source code
@@ -40,9 +43,7 @@ Start with these documents:
 8. Propose Python architecture (last)
 
 ## Status
-- Completed: Steps 1-4
-- In progress: Step 5 (CLI-manual cross-check)
-- Pending: Steps 6, 7, 8
+- Completed: Steps 1-8
 
 ## Repository Notes
 - This repository currently contains source and analysis docs.
