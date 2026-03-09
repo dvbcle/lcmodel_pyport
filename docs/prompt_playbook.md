@@ -257,6 +257,16 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - evidence summary now reports `fail=0`,
   - full suite remains intentionally red only on legacy reference-mode strict-XPASS tests.
 
+42. Gate 2/3 numerical deepening start
+- Output:
+  - prelim engine now derives shift direction/magnitude from analysis vectors (`best_shift_points`, `best_shift_ppm`),
+  - prelim FWHM now computed from spectral half-height width with calibrated legacy-scale mapping,
+  - added numeric-progress tests for shift-direction response and S/N response to injected noise (`tests/test_gate_g2_g3_numeric_progress.py`).
+- Result:
+  - targeted Gate 2/3 tests pass,
+  - external evidence and compare-only parity remain green,
+  - full-suite red state remains limited to intentional legacy strict-XPASS tests.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -321,6 +331,9 @@ Use these directly in future sessions.
 20. Gate-plan execution
 - "Implement the next documented gate end-to-end, prove it with targeted tests, then update evidence criteria and docs status before committing."
 
+21. Numerical deepening with invariants
+- "When replacing constants with derived numerics, add invariant-style tests (directionality, monotonicity, noise response) so behavior improves without destabilizing parity gates."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -340,4 +353,4 @@ Use these directly in future sessions.
 15. Promote manual-debug fallback paths (like PS-input checkpoints) into automated evidence stages as soon as defined.
 
 ## Suggested Next Prompt
-- "Proceed to Step 9 Gate 2/3: replace heuristic prelim/fullfit constants with numerically derived solver behavior while preserving compare-only parity tests and `VT-E2E-EVID-001` green."
+- "Continue Step 9 Gate 3/4: replace remaining fullfit/report constants (`alpha`, phase terms, concentration synthesis) with solver-derived state while keeping compare-only parity and evidence green."

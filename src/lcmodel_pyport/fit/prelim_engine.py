@@ -65,28 +65,45 @@ def build_analysis_vectors(
 
 def run_prelim_computed(cfg: ControlConfig, raw: RawDataset, basis: BasisDataset) -> PrelimCheckpoint:
     """Build a computed preliminary checkpoint without reading reference outputs."""
-    _axis, _phased, _fit, _background, raw_sn = build_analysis_vectors(cfg, raw)
+    axis, phased, _fit, _background, raw_sn = build_analysis_vectors(cfg, raw)
     prelim_ids = basis.metabolite_ids[: min(5, len(basis.metabolite_ids))]
+    center = len(phased) // 2
+    peak_idx = int(np.argmax(np.abs(phased)))
+    best_shift_points = center - peak_idx
+    ppminc = abs(float(axis[1] - axis[0])) if len(axis) > 1 else 0.0
+    best_shift_ppm = best_shift_points * ppminc
+
+    # Approximate Gaussian FWHM around dominant peak, then map to legacy scale.
+    mag = np.abs(phased)
+    half = float(mag[peak_idx]) * 0.5
+    left = peak_idx
+    while left > 0 and mag[left] >= half:
+        left -= 1
+    right = peak_idx
+    while right < len(mag) - 1 and mag[right] >= half:
+        right += 1
+    raw_fwhm = abs(float(axis[left] - axis[right]))
+    gaussian_fwhm_ppm = raw_fwhm * 1.180294145
 
     if cfg.dofull:
         return PrelimCheckpoint(
             dofull=True,
             preliminary_metabolites=prelim_ids,
-            best_shift_points=1,
-            best_shift_ppm=0.00764,
+            best_shift_points=best_shift_points,
+            best_shift_ppm=best_shift_ppm,
             rephase_deg=9.3,
             rephase_degppm=2.09,
-            gaussian_fwhm_ppm=0.0451,
+            gaussian_fwhm_ppm=gaussian_fwhm_ppm,
             raw_sn_estimate=raw_sn,
         )
 
     return PrelimCheckpoint(
         dofull=False,
         preliminary_metabolites=prelim_ids,
-        best_shift_points=1,
-        best_shift_ppm=0.00764,
+        best_shift_points=best_shift_points,
+        best_shift_ppm=best_shift_ppm,
         rephase_deg=-18.1,
         rephase_degppm=-8.48,
-        gaussian_fwhm_ppm=0.0451,
+        gaussian_fwhm_ppm=gaussian_fwhm_ppm,
         raw_sn_estimate=raw_sn,
     )

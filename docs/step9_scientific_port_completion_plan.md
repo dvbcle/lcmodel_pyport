@@ -12,8 +12,9 @@ Fortran artifacts are used only as a validation oracle.
 ## Remaining Steps to Full Scientific Port
 
 1. Remove residual reference dependencies from computed mode
-- Current gap:
-  - computed orchestrator still reads reference `.print` and reference fullfit checkpoint helper.
+- Current state:
+  - completed for computed orchestration path.
+  - computed mode now derives prelim/fullfit checkpoints from Python engines.
 - Target:
   - computed mode derives prelim/fullfit state from Python engines only.
 - Exit tests:
@@ -67,4 +68,6 @@ Fortran artifacts are used only as a validation oracle.
 ## Current Status Snapshot (as of 2026-03-09)
 - Compare-only parity infrastructure is in place.
 - Computed-mode generation/orchestration tests pass for contracts.
-- Scientific numeric parity is not complete; `output_numeric_regression_stage` is still failing.
+- Evidence run is green (`fail=0`, `not_implemented=0`) for the external dataset fixture pair.
+- Compare-only scientific parity tests are green for both branches.
+- Gate 1 is complete; Gate 2/3 numerical deepening is in progress.

@@ -60,10 +60,13 @@ Start with these documents:
 - Evidence now includes explicit PS-input intermediate parity stage (`ps_input_parity_stage`) for visual-debug fallback.
 - Python output-stage now emits inspectable `.ps` files for both external dataset branches.
 - Computed-mode orchestration now runs prelim/fullfit checkpoints without reading reference `.print/.table` artifacts.
+- Step 9 progress:
+  - Gate 1 complete (computed prelim/fullfit checkpoints wired into computed orchestration, compare-only parity/evidence green).
+  - Gate 2/3 started (data-derived prelim shift/FWHM behavior and numeric-progress tests added).
 - Current test status:
   - Computed-mode/evidence tests are passing (`tests/test_gate_g5_output_stage_computed.py`, `tests/test_gate_g6_orchestrator_computed_mode.py`, `tests/test_evidence_external_dataset.py`).
   - Compare-only scientific parity tests are passing (`tests/test_scientific_parity_compare_only.py`) for both external branches.
-  - New computed checkpoint tests are passing (`tests/test_gate_g4_computed_engines.py`).
+  - New computed checkpoint tests are passing (`tests/test_gate_g4_computed_engines.py`, `tests/test_gate_g2_g3_numeric_progress.py`).
   - Full `pytest` run is intentionally red on 4 legacy reference-backed tests (`tests/test_gate_g5_output_stage.py`, `tests/test_gate_g6_orchestrator_reference_mode.py`) via strict `xfail` so reference-backed generation paths are explicitly treated as failing during migration.
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
