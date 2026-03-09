@@ -172,6 +172,12 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - Output: added minimal output-stage orchestrator and `.print` writer, plus regression tests for case02/case03 generation paths.
 - Result: full test suite passed after expansion.
 
+31. G6 reference-mode orchestration start
+- User requested autonomous continuation.
+- Output: added case-level orchestrator with explicit stage sequencing and `DOFULL` branch behavior (`fullfit_loaded` only for full mode).
+- Integrated evidence generation through orchestration path instead of direct output-stage calls.
+- Result: suite remained green after orchestration integration.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -212,6 +218,9 @@ Use these directly in future sessions.
 12. Evidence closure prompt
 - "Promote `not_implemented` evidence stages to executable checks before advancing to the next gate."
 
+13. Orchestration-first gate advance
+- "Introduce gate-level orchestrator paths in reference mode first, then replace reference-backed state with true solver-generated state."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -224,6 +233,7 @@ Use these directly in future sessions.
 8. For early numerical failures, patch only the failing kernel/test pair first, rerun, and avoid expanding scope until green.
 9. Update `docs/prompt_playbook.md` before every commit so project memory stays synchronized with git history.
 10. Prefer converting stage placeholders in evidence reports into executable comparisons as soon as parser/writer primitives exist.
+11. For Gate G6 transitions, assert branch behavior (`DOFULL`) and stage-presence flags explicitly before tightening numeric parity.
 
 ## Suggested Next Prompt
-- "Continue Gate G5/G6: replace reference-backed output-stage generation with true pipeline-generated stage state, then tighten numeric tolerances for nightly regression."
+- "Continue G6: add true pipeline stage-state objects (instead of parsed-reference state), then keep evidence parity green while swapping one stage at a time."

@@ -51,8 +51,9 @@ Start with these documents:
   - Gate G3 complete (Step 8 module-aligned numerical kernels, indexing helpers, and unit tests).
   - Gate G4 started (fullfit-stage reference checkpoint extraction + parity tests for full mode).
   - Gate G5 in progress (added `.print` writer and minimal output-stage generation for `.table/.coord/.corraw/.print` from canonical parsed state).
+- G6 started: reference-mode orchestrator added for case-level staged flow and DOFULL branch behavior checks.
 - Evidence run available: `VT-E2E-EVID-001` (`tests/test_evidence_external_dataset.py`) with JSON/JUnit output and no `not_implemented` stages.
-- Current test status: `44 passed` (pytest, local workspace).
+- Current test status: `46 passed` (pytest, local workspace).
 - Rollback checkpoint tags:
   - `checkpoint/pre_g3_align_20260309`
   - `checkpoint/pre_g4_start_20260309`

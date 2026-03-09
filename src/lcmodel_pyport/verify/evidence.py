@@ -11,7 +11,7 @@ from lcmodel_pyport.config.control_parser import build_control_config
 from lcmodel_pyport.fit.fullfit_engine import run_fullfit_reference
 from lcmodel_pyport.io.basis_reader import read_basis_dataset
 from lcmodel_pyport.io.raw_reader import read_raw_dataset
-from lcmodel_pyport.pipeline.output_stage import generate_outputs_from_reference_case
+from lcmodel_pyport.pipeline.orchestrator import run_case_reference_mode
 from lcmodel_pyport.verify.compare import close_scalar, max_abs_delta, rmse
 from lcmodel_pyport.verify.fixtures import load_checksums, verify_checksum
 from lcmodel_pyport.verify.parsers_coord import parse_coord
@@ -256,23 +256,32 @@ def run_external_dataset_evidence(root: Path) -> dict[str, Any]:
 
     generated_dir = root / "tests" / ".tmp" / "generated_external_case02"
     try:
-        generated = generate_outputs_from_reference_case(
+        orchestration = run_case_reference_mode(
             root / "artifacts" / "step4_exec" / "case02_trace_full",
             generated_dir,
         )
-        files_exist = all(path.exists() for path in generated.values())
+        generated = orchestration.output_paths
+        files_exist = all(path.exists() for path in generated.values()) and orchestration.output_generated
         stages.append(
             _stage_pass(
                 "python_pipeline_e2e_generation",
-                "Python output-stage generation produced all expected files.",
-                {"generated_files": {k: str(v) for k, v in generated.items()}},
+                "Python reference-mode orchestration produced all expected files.",
+                {
+                    "generated_files": {k: str(v) for k, v in generated.items()},
+                    "dofull": orchestration.dofull,
+                    "fullfit_loaded": orchestration.fullfit_loaded,
+                },
                 ["docs/step8_python_architecture_proposal.md:294-296"],
             )
             if files_exist
             else _stage_fail(
                 "python_pipeline_e2e_generation",
                 "Generated outputs missing expected files.",
-                {"generated_files": {k: str(v) for k, v in generated.items()}},
+                {
+                    "generated_files": {k: str(v) for k, v in generated.items()},
+                    "dofull": orchestration.dofull,
+                    "fullfit_loaded": orchestration.fullfit_loaded,
+                },
                 ["docs/step8_python_architecture_proposal.md:294-296"],
             )
         )
