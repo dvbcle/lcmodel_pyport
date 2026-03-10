@@ -45,20 +45,36 @@ def _computed_concentration_row_count(basis: BasisDataset, dofull: bool) -> int:
     return (2 * n) + 1
 
 
-def _template_for_entry(data: list[complex], ny: int) -> np.ndarray:
+def _template_for_entry(
+    data: list[complex],
+    ny: int,
+    window_start: int | None = None,
+    ndata_hint: int | None = None,
+    ppm_axis: np.ndarray | None = None,
+    phase0_deg: float = 0.0,
+    phase1_deg_per_ppm: float = 0.0,
+    ppm_ref: float = 4.65,
+) -> np.ndarray:
     arr = np.asarray(data, dtype=np.complex128)
     n = int(arr.size)
-    ndata = max(2 * n, ny)
+    ndata = max(int(ndata_hint) if ndata_hint is not None else 0, 2 * n, ny)
     zf = np.zeros(ndata, dtype=np.complex128)
     zf[:n] = arr
     spec = cfft_r(zf)
-    start = max(0, (spec.size // 2) - ny // 2)
+    if window_start is None:
+        start = max(0, (spec.size // 2) - ny // 2)
+    else:
+        start = max(0, min(int(window_start), max(0, spec.size - ny)))
     win = spec[start : start + ny]
     if win.size < ny:
         padded = np.zeros(ny, dtype=np.complex128)
         padded[: win.size] = win
         win = padded
-    vec = np.real(win)
+    if ppm_axis is not None and ppm_axis.size == ny:
+        phase_deg = phase0_deg + phase1_deg_per_ppm * (ppm_axis - ppm_ref)
+        vec = np.real(win * np.exp(1j * np.deg2rad(phase_deg)))
+    else:
+        vec = np.real(win)
     vec = vec - float(np.mean(vec))
     norm = float(np.linalg.norm(vec))
     if norm <= 0:
@@ -66,14 +82,36 @@ def _template_for_entry(data: list[complex], ny: int) -> np.ndarray:
     return vec / norm
 
 
-def solve_base_amplitudes(phased: np.ndarray, basis: BasisDataset) -> np.ndarray:
+def solve_base_amplitudes(
+    phased: np.ndarray,
+    basis: BasisDataset,
+    *,
+    window_start: int | None = None,
+    ndata_hint: int | None = None,
+    ppm_axis: np.ndarray | None = None,
+    phase0_deg: float = 0.0,
+    phase1_deg_per_ppm: float = 0.0,
+    ppm_ref: float = 4.65,
+) -> np.ndarray:
     """Solve nonnegative metabolite amplitudes from phased data and basis payloads."""
     signal = np.asarray(phased, dtype=float)
     ny = signal.size
     if ny == 0 or not basis.entries:
         return np.zeros(len(basis.entries), dtype=float)
     b = signal - float(np.mean(signal))
-    cols = [_template_for_entry(entry.data, ny) for entry in basis.entries]
+    cols = [
+        _template_for_entry(
+            entry.data,
+            ny,
+            window_start=window_start,
+            ndata_hint=ndata_hint,
+            ppm_axis=ppm_axis,
+            phase0_deg=phase0_deg,
+            phase1_deg_per_ppm=phase1_deg_per_ppm,
+            ppm_ref=ppm_ref,
+        )
+        for entry in basis.entries
+    ]
     mat = np.column_stack(cols) if cols else np.zeros((ny, 0), dtype=float)
     if mat.shape[1] == 0:
         return np.zeros(0, dtype=float)

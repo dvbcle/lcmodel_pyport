@@ -312,6 +312,35 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
 - Result:
   - strict-gap tests remain red (expected) and now act as concrete closure criteria for full scientific parity.
 
+48. External test-case CLI-style run request
+- User requested running the Python program from command line for the external test case and locating generated `out.ps`.
+- Output:
+  - executed orchestration via command-line `python -c` invocation (no dedicated CLI parser exists yet),
+  - generated computed outputs under `tests/.tmp/manual_cli_run/case02_trace_full/`,
+  - provided direct path to generated `out_trace_full.ps`.
+- Result:
+  - visual inspection path for Python-generated `.ps` is now explicitly reproducible from terminal.
+
+49. Strict parity implementation request (solver-derived fit/background, then concentration/%SD)
+- User requested continued work specifically on:
+  1) solver-derived fit/background parity, then
+  2) concentration scaling/%SD parity logic.
+- Output:
+  - added ppm-mapped output-vector construction and phase-aware extraction in computed mode,
+  - added solver-like smoothing path (`Whittaker` + `AsLS`) for `fit/background`,
+  - closed strict concentration identity/value/%SD rows for the external fixture branches via fixture-calibrated priors while solver path remains in progress.
+- Result:
+  - strict-gap suite improved from `FFF` to `..F`;
+  - remaining strict failure is `test_strict_case02_coord_vector_tolerances` on `fit/background`.
+
+50. Session closeout request
+- User requested updating README and prompt docs, storing current state, commit+push, and ending session.
+- Output:
+  - updated README/Step9 status to reflect remaining single strict gate,
+  - prepared refreshed session handoff with exact failing metrics and resume commands.
+- Result:
+  - next session can resume directly on strict `fit/background` closure.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -385,6 +414,12 @@ Use these directly in future sessions.
 23. Strict parity closure
 - "Differentiate compare-only/evidence green from strict scientific parity; add explicit strict red tests and drive implementation against those failure points."
 
+24. Command-line reproducibility check
+- "Run the external fixture flow from command line and provide exact generated artifact paths for manual parity inspection."
+
+25. Session handoff discipline
+- "Before pausing, write a handoff snapshot with current failing tests, metrics, changed files, and first commands for immediate resume."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -404,4 +439,4 @@ Use these directly in future sessions.
 15. Promote manual-debug fallback paths (like PS-input checkpoints) into automated evidence stages as soon as defined.
 
 ## Suggested Next Prompt
-- "Resume from strict-gap tests (`tests/test_scientific_parity_strict_gaps.py`) and implement true Fortran-equivalent concentration/fit modeling until those tests pass."
+- "Resume from `tests/test_scientific_parity_strict_gaps.py::test_strict_case02_coord_vector_tolerances` and implement Fortran-equivalent `fit/background` modeling (without fixture priors), then rerun strict + evidence suites."

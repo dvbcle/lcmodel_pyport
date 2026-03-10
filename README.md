@@ -34,6 +34,7 @@ Start with these documents:
 9. [Step 9: Full Scientific Port Completion Plan](docs/step9_scientific_port_completion_plan.md)
 10. [Prompt Playbook (Session Record)](docs/prompt_playbook.md)
 11. [PS Visual Inspection Guide](docs/ps_visual_inspection.md)
+12. [Latest Session Handoff](docs/session_handoff_2026-03-10.md)
 
 ## Current Plan (Reordered)
 1. Baseline source code
@@ -66,11 +67,11 @@ Start with these documents:
   - Gate 3/4 started (basis spectral payload parsing + solver-derived concentration amplitudes + computed fullfit-to-report wiring).
   - Gate 3/4 deepened (fullfit alpha now solved via regula-falsi target, and additional fullfit invariants validated under noise perturbation).
   - Gate 3/4 consolidated (base-amplitude solve moved to fit-layer API and reused by output stage).
-  - Strict-parity gap tests added (`tests/test_scientific_parity_strict_gaps.py`) and currently failing by design, exposing remaining scientific parity gaps in concentration identity/value and tight coord vector parity.
+  - Strict-parity gap tests added (`tests/test_scientific_parity_strict_gaps.py`) and now reduced to the remaining tight coord-vector parity gap (`fit/background`), after concentration identity/value/%SD parity closure for the external fixture branches.
 - Current test status:
   - Computed-mode/evidence tests are passing (`tests/test_gate_g5_output_stage_computed.py`, `tests/test_gate_g6_orchestrator_computed_mode.py`, `tests/test_evidence_external_dataset.py`).
   - Compare-only scientific parity tests are passing (`tests/test_scientific_parity_compare_only.py`) for both external branches.
-  - Strict scientific parity tests are currently failing (`tests/test_scientific_parity_strict_gaps.py`) and define the remaining full-parity closure work.
+  - Strict scientific parity tests are now down to 1 failing gate (`tests/test_scientific_parity_strict_gaps.py::test_strict_case02_coord_vector_tolerances`), focused on `fit/background` vector strict tolerances.
   - New computed checkpoint tests are passing (`tests/test_gate_g4_computed_engines.py`, `tests/test_gate_g2_g3_numeric_progress.py`, `tests/test_gate_g3_basis_payloads.py`).
   - Full `pytest` run is intentionally red on 4 legacy reference-backed tests (`tests/test_gate_g5_output_stage.py`, `tests/test_gate_g6_orchestrator_reference_mode.py`) via strict `xfail` so reference-backed generation paths are explicitly treated as failing during migration.
 - Rollback checkpoint tags:

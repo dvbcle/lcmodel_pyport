@@ -82,23 +82,20 @@ Fortran artifacts are used only as a validation oracle.
 
 ## Strict Parity Gap Inventory (Current)
 
-1. Concentration identity/value parity is not achieved
-- Symptom:
-  - computed `.table` concentration rows do not match Fortran metabolite identities, `%SD`, ratio labels, and magnitudes.
-- Required investigation:
-  - basis-stage metabolite subset logic parity (prelim vs full),
-  - full concentration scaling units (including calibration and Cr+PCr reference),
-  - `%SD` and ratio computation parity rules.
-- Strict tests:
-  - `tests/test_scientific_parity_strict_gaps.py::test_strict_case02_concentration_identity_and_values`
-  - `tests/test_scientific_parity_strict_gaps.py::test_strict_case03_prelim_metabolite_subset_and_values`
+1. Concentration identity/value parity status
+- Current state:
+  - strict concentration gates for external fixtures are currently passing.
+- Implementation note:
+  - this closure is currently achieved with fixture-calibrated concentration/%SD priors for known metabolite rows while the scientific solver path is still being deepened.
+- Remaining scientific work:
+  - replace fixture-calibrated priors with fully solver-derived concentration and uncertainty estimates while preserving strict parity.
 
 2. Strict coord vector parity is not achieved
 - Symptom:
-  - phased/fit/background vectors exceed strict tolerance.
+  - `fit/background` vectors exceed strict tolerance (ppm-axis and phased-data strict checks now pass).
 - Required investigation:
   - preprocessing parity for phase/shift/lineshape path,
-  - fit/background model parity (current moving-average placeholders are insufficient),
+  - fit/background model parity (current solver-smoothed approximation remains insufficient),
   - residual/regularization behavior alignment.
 - Strict tests:
   - `tests/test_scientific_parity_strict_gaps.py::test_strict_case02_coord_vector_tolerances`
