@@ -295,6 +295,23 @@ Capture the prompt patterns, decisions, and outcomes from this chat so future se
   - computed-output parity remains green,
   - architecture alignment improved toward Step 8 separation of concerns.
 
+46. Strict scientific-parity clarification request
+- User asked whether current E2E output "matches" Fortran for the external dataset.
+- Output:
+  - clarified distinction between compare-only/tolerance parity (currently green) and strict scientific parity (not green).
+- Result:
+  - alignment on next goal: close strict parity, not just current evidence profile.
+
+47. Strict-gap test gate request + failsafe execution
+- User requested explicit failing tests for missing full parity, then asked to proceed fixing them.
+- Output:
+  - added strict-gap test module: `tests/test_scientific_parity_strict_gaps.py`,
+  - confirmed strict failures in concentration identity/value and tight coord vectors,
+  - attempted non-cheating improvements (basis-domain template handling, amplitude-driven prelim selection, single-precision ppm stepping),
+  - documented remaining gap inventory and strict test IDs in Step 7/Step 9 docs.
+- Result:
+  - strict-gap tests remain red (expected) and now act as concrete closure criteria for full scientific parity.
+
 ## Reusable Prompt Templates
 
 Use these directly in future sessions.
@@ -365,6 +382,9 @@ Use these directly in future sessions.
 22. Basis-to-report closure
 - "Before claiming solver-stage progress, ensure basis spectral payload parsing is exercised and concentrations are generated through a computed nonnegative solve path."
 
+23. Strict parity closure
+- "Differentiate compare-only/evidence green from strict scientific parity; add explicit strict red tests and drive implementation against those failure points."
+
 ## Operating Rules That Worked Well
 
 1. Keep each step in a dedicated document.
@@ -384,4 +404,4 @@ Use these directly in future sessions.
 15. Promote manual-debug fallback paths (like PS-input checkpoints) into automated evidence stages as soon as defined.
 
 ## Suggested Next Prompt
-- "Continue Step 9 Gate 3/4 by replacing remaining calibrated constants with explicit optimization/regularization loops, while preserving evidence/parity green and compare-only constraints."
+- "Resume from strict-gap tests (`tests/test_scientific_parity_strict_gaps.py`) and implement true Fortran-equivalent concentration/fit modeling until those tests pass."

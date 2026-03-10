@@ -50,14 +50,36 @@ def _expanded_metabolite_ids(basis_ids: list[str], dofull: bool) -> list[str]:
     return expanded
 
 
+def _prelim_ids_from_amplitudes(basis_ids: list[str], base_amplitudes: np.ndarray, k: int = 5) -> list[str]:
+    if not basis_ids:
+        return []
+    if base_amplitudes.size == 0:
+        return basis_ids[: min(k, len(basis_ids))]
+    order = sorted(
+        range(min(len(basis_ids), base_amplitudes.size)),
+        key=lambda i: (-float(base_amplitudes[i]), i),
+    )
+    chosen = [basis_ids[i] for i in order[: min(k, len(order))]]
+    if len(chosen) < min(k, len(basis_ids)):
+        for mid in basis_ids:
+            if mid not in chosen:
+                chosen.append(mid)
+            if len(chosen) == min(k, len(basis_ids)):
+                break
+    return chosen
+
+
 def _computed_concentrations(
     basis_ids: list[str],
     base_amplitudes: np.ndarray,
     dofull: bool,
 ) -> list[ConcentrationRow]:
     ids = _expanded_metabolite_ids(basis_ids, dofull=dofull)
+    if not dofull:
+        ids = _prelim_ids_from_amplitudes(basis_ids, base_amplitudes, k=5)
     base_map = {bid: float(base_amplitudes[i]) for i, bid in enumerate(basis_ids[: base_amplitudes.size])}
     scale = max(1e-12, max(base_map.values(), default=1e-12))
+    cr_pcr = max(1e-12, base_map.get("Cr", 0.0) + base_map.get("PCr", 0.0))
 
     def value_for(mid: str) -> float:
         if "+" not in mid:
@@ -69,13 +91,14 @@ def _computed_concentrations(
     rows: list[ConcentrationRow] = []
     for i, mid in enumerate(ids, start=1):
         conc = value_for(mid)
-        pct_sd = min(999, 4 + 2 * i)
-        ratio = 1.0 if i == 1 else conc / max(scale, 1e-12)
+        stability = max(1e-12, conc / scale)
+        pct_sd = min(999, max(1, int(round(40.0 / stability))))
+        ratio = conc / cr_pcr
         rows.append(
             ConcentrationRow(
                 conc=float(conc),
                 pct_sd=int(pct_sd),
-                ratio_label=f"{ratio:0.3f}",
+                ratio_label=f"{ratio:0.3E}" if ratio < 0.1 else f"{ratio:0.3f}",
                 metabolite=mid,
             )
         )
@@ -266,7 +289,7 @@ def generate_outputs_from_computed_case(case_dir: str | Path, out_dir: str | Pat
         seqacq=bool(raw.nmid.seqacq),
         bruker=bool(raw.nmid.bruker),
     )
-    prelim_ids = basis.metabolite_ids[: min(5, len(basis.metabolite_ids))]
+    prelim_ids = _prelim_ids_from_amplitudes(basis.metabolite_ids, base_amplitudes, k=5)
     write_print(
         out_print,
         dofull=cfg.dofull,

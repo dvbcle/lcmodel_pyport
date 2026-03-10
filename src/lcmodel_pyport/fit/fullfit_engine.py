@@ -13,6 +13,7 @@ from lcmodel_pyport.io.basis_reader import BasisDataset
 from lcmodel_pyport.fit.prelim_engine import PrelimCheckpoint
 from lcmodel_pyport.fit.regularization import regula_falsi
 from lcmodel_pyport.fit.solver_linear import solve_nonnegative
+from lcmodel_pyport.preprocess.fft_ops import cfft_r
 from lcmodel_pyport.verify.parsers_print import parse_print
 from lcmodel_pyport.verify.parsers_table import parse_table
 
@@ -46,18 +47,18 @@ def _computed_concentration_row_count(basis: BasisDataset, dofull: bool) -> int:
 
 def _template_for_entry(data: list[complex], ny: int) -> np.ndarray:
     arr = np.asarray(data, dtype=np.complex128)
-    if arr.size < ny:
+    n = int(arr.size)
+    ndata = max(2 * n, ny)
+    zf = np.zeros(ndata, dtype=np.complex128)
+    zf[:n] = arr
+    spec = cfft_r(zf)
+    start = max(0, (spec.size // 2) - ny // 2)
+    win = spec[start : start + ny]
+    if win.size < ny:
         padded = np.zeros(ny, dtype=np.complex128)
-        padded[: arr.size] = arr
-        arr = padded
-    elif arr.size > ny:
-        start = max(0, (arr.size // 2) - ny // 2)
-        arr = arr[start : start + ny]
-        if arr.size < ny:
-            padded = np.zeros(ny, dtype=np.complex128)
-            padded[: arr.size] = arr
-            arr = padded
-    vec = np.real(arr)
+        padded[: win.size] = win
+        win = padded
+    vec = np.real(win)
     vec = vec - float(np.mean(vec))
     norm = float(np.linalg.norm(vec))
     if norm <= 0:
@@ -76,6 +77,17 @@ def solve_base_amplitudes(phased: np.ndarray, basis: BasisDataset) -> np.ndarray
     mat = np.column_stack(cols) if cols else np.zeros((ny, 0), dtype=float)
     if mat.shape[1] == 0:
         return np.zeros(0, dtype=float)
+
+    # Use least-squares + nonnegative clamp as stable baseline; projected NNLS
+    # remains as a refinement/fallback.
+    try:
+        lsq = np.linalg.lstsq(mat, b, rcond=None)[0]
+        lsq = np.clip(lsq, 0.0, None)
+        if float(np.max(lsq)) > 0.0:
+            return lsq
+    except Exception:
+        pass
+
     try:
         return solve_nonnegative(mat, b, tol=1e-10, max_iter=8000)
     except Exception:

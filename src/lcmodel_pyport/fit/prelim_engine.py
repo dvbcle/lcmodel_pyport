@@ -37,10 +37,18 @@ def build_analysis_vectors(
     ppmend: float = 0.2,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
     """Build analysis vectors and raw S/N estimate from RAW input only."""
+    # Emulate legacy single-precision ppm stepping to reduce axis drift versus
+    # Fortran-written .coord outputs.
     ndata = 2 * cfg.nunfil
-    ppminc = 1.0 / (float(ndata) * cfg.deltat * cfg.hzpppm)
+    ndata32 = np.float32(ndata)
+    ppminc32 = np.float32(1.0) / (ndata32 * np.float32(cfg.deltat) * np.float32(cfg.hzpppm))
+    ppminc = float(ppminc32)
     ny = int(round((ppmst - ppmend) / ppminc)) + 1
-    ppm_axis = ppmst - np.arange(ny, dtype=float) * ppminc
+    ppm_axis32 = np.empty(ny, dtype=np.float32)
+    ppm_axis32[0] = np.float32(ppmst)
+    for i in range(1, ny):
+        ppm_axis32[i] = ppm_axis32[i - 1] - ppminc32
+    ppm_axis = ppm_axis32.astype(float)
 
     zf = np.zeros(ndata, dtype=np.complex128)
     zf[: cfg.nunfil] = np.asarray(raw.data, dtype=np.complex128)

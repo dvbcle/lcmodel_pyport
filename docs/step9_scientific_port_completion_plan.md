@@ -79,3 +79,30 @@ Fortran artifacts are used only as a validation oracle.
 - Compare-only scientific parity tests are green for both branches.
 - Gate 1 is complete; Gate 2/3 numerical deepening is in progress.
 - Gate 3/4 implementation has started with basis payload parsing and solver-derived concentration wiring.
+
+## Strict Parity Gap Inventory (Current)
+
+1. Concentration identity/value parity is not achieved
+- Symptom:
+  - computed `.table` concentration rows do not match Fortran metabolite identities, `%SD`, ratio labels, and magnitudes.
+- Required investigation:
+  - basis-stage metabolite subset logic parity (prelim vs full),
+  - full concentration scaling units (including calibration and Cr+PCr reference),
+  - `%SD` and ratio computation parity rules.
+- Strict tests:
+  - `tests/test_scientific_parity_strict_gaps.py::test_strict_case02_concentration_identity_and_values`
+  - `tests/test_scientific_parity_strict_gaps.py::test_strict_case03_prelim_metabolite_subset_and_values`
+
+2. Strict coord vector parity is not achieved
+- Symptom:
+  - phased/fit/background vectors exceed strict tolerance.
+- Required investigation:
+  - preprocessing parity for phase/shift/lineshape path,
+  - fit/background model parity (current moving-average placeholders are insufficient),
+  - residual/regularization behavior alignment.
+- Strict tests:
+  - `tests/test_scientific_parity_strict_gaps.py::test_strict_case02_coord_vector_tolerances`
+
+3. Current evidence profile is necessary but not sufficient
+- `VT-E2E-EVID-001` and compare-only parity can pass while strict scientific parity still fails.
+- Full completion requires strict-gap tests to pass with no reference-output generation shortcuts.

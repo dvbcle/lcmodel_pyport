@@ -254,6 +254,13 @@ Never normalize away:
   - concentration rows keyed by metabolite.
 - Emit per-case metric deltas in machine-readable report.
 
+### VT-N-007 Strict Concentration Identity/Value Gate (expected red until full parity)
+- Require exact equality of parsed concentration details against Fortran reference for target fixtures.
+- Includes metabolite identity, concentration, `%SD`, and ratio label fields.
+
+### VT-N-008 Strict Coord Vector Gate (expected red until full parity)
+- Require tightened vector tolerances on `ppm_axis`, `phased_data`, `fit`, and `background` suitable for scientific-equivalence claims.
+
 ## Suite D: Diagnostic Tests (manual/debug)
 
 ### VT-D-001 Artifact Diff Report
@@ -340,8 +347,8 @@ These tests validate numerical kernels independently of full fixture runs.
 | RQ-007 | VT-I-004, VT-I-005, VT-C-005, VT-S-001 |
 | RQ-008 | VT-I-005, VT-C-005, VT-N-001, VT-N-005, VT-U-N-008, VT-U-N-011 |
 | RQ-009 | VT-C-001, VT-I-007 |
-| RQ-010 | VT-C-002, VT-N-001, VT-N-002, VT-N-006, VT-I-006 |
-| RQ-011 | VT-C-003, VT-N-003, VT-N-005, VT-I-007 |
+| RQ-010 | VT-C-002, VT-N-001, VT-N-002, VT-N-006, VT-N-007, VT-I-006 |
+| RQ-011 | VT-C-003, VT-N-003, VT-N-005, VT-N-008, VT-I-007 |
 | RQ-012 | VT-C-004, VT-N-004, VT-I-007 |
 | RQ-013 | VT-C-001, VT-D-001 |
 | RQ-014 | VT-S-001, VT-D-001, VT-U-N-012 |
